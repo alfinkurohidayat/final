@@ -331,7 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const res = await fetch(
-        `/api/media/${encodeURIComponent(kelas)}/${encodeURIComponent(submateri)}`,
+        `https://final-o4p6.onrender.com/api/media/${encodeURIComponent(kelas)}/${encodeURIComponent(submateri)}`,
       );
       const data = await res.json();
 

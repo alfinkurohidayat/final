@@ -9,87 +9,149 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 dotenv.config();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
 // ==============================
-// 🔗 Koneksi MongoDB Compass
+// 🔗 Koneksi MongoDB
 // ==============================
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB Compass terhubung"))
-  .catch((err) => console.error("❌ Gagal konek MongoDB:", err));
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB terhubung"))
+  .catch((err) => console.error("❌ MongoDB error:", err));
 
 // ==============================
-// 📦 Schema MongoDB
+// 📦 Schema
 // ==============================
-const mediaSchema = new mongoose.Schema({
-  title: String, // Judul materi
-  type: String, // "video" atau "audio"
-  url: String, // Path upload file
-  kelas: String, // Contoh: "Class 10"
-  submateri: String, // Contoh: "Material" / "Vocabulary"
-});
+const mediaSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+    },
+
+    type: {
+      type: String,
+      enum: ["video", "audio"],
+      required: true,
+    },
+
+    url: {
+      type: String,
+      required: true,
+    },
+
+    kelas: {
+      type: String,
+      required: true,
+    },
+
+    submateri: {
+      type: String,
+      required: true,
+    },
+  },
+  { timestamps: true },
+);
 
 const Media = mongoose.model("Media", mediaSchema);
 
 // ==============================
 // ⚙️ Middleware
 // ==============================
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(
+  express.urlencoded({
+    extended: true,
+  }),
+);
+
 app.use(express.static(path.join(__dirname, "public")));
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.set("trust proxy", 1); // WAJIB untuk Render / HTTPS
+// Render / HTTPS FIX
+app.set("trust proxy", 1);
+
+// ==============================
+// 🔐 Session
+// ==============================
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "rahasia-super-aman",
+    name: "connect.sid",
+
+    secret: process.env.SESSION_SECRET || "super-secret",
+
     resave: false,
+
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+    }),
+
     cookie: {
-      maxAge: 1000 * 60 * 60 * 2,
-      secure: true, // WAJIB untuk HTTPS
-      sameSite: "none", // supaya bisa cross-domain
+      httpOnly: true,
+
+      secure: true,
+
+      sameSite: "none",
+
+      maxAge: 1000 * 60 * 60 * 24,
     },
   }),
 );
 
 // ==============================
-// 📂 Konfigurasi Upload File
+// 🔐 Auth Middleware
 // ==============================
+
+function checkAuth(req, res, next) {
+  if (req.session.isAdmin) {
+    next();
+  } else {
+    res.status(403).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+}
+
+// ==============================
+// 📂 Setup Upload
+// ==============================
+
 const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`);
+    const cleanName = file.originalname.replace(/\s+/g, "_");
+
+    cb(null, Date.now() + "-" + cleanName);
   },
 });
 
 const upload = multer({ storage });
 
 // ==============================
-// 🔐 Middleware Autentikasi Admin
+// 🔑 LOGIN
 // ==============================
-function checkAuth(req, res, next) {
-  if (req.session.isAdmin) next();
-  else res.status(403).json({ message: "Akses ditolak!" });
-}
 
-// ==============================
-// 🔑 Login Admin
-// ==============================
-app.post("/login", async (req, res) => {
+app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
   if (
@@ -97,150 +159,206 @@ app.post("/login", async (req, res) => {
     password === process.env.ADMIN_PASS
   ) {
     req.session.isAdmin = true;
-    return res.json({ success: true, message: "Login berhasil!" });
+
+    return res.json({
+      success: true,
+      message: "Login berhasil",
+    });
   }
 
   res.status(401).json({
     success: false,
-    message: "Login gagal! Username atau password salah.",
+    message: "Username atau password salah",
   });
 });
 
-// 🔍 Cek status login
+// ==============================
+// 🔍 CHECK LOGIN
+// ==============================
+
 app.get("/check-login", (req, res) => {
-  res.json({ loggedIn: !!req.session.isAdmin });
-});
-
-// 🚪 Logout
-app.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("❌ Gagal logout:", err);
-      return res.status(500).json({ success: false, message: "Gagal logout!" });
-    }
-    res.clearCookie("connect.sid");
-    res.json({ success: true, message: "Berhasil logout!" });
+  res.json({
+    loggedIn: !!req.session.isAdmin,
   });
 });
 
 // ==============================
-// 🎥 API Media (CRUD)
+// 🚪 LOGOUT
 // ==============================
 
-// 🔹 Ambil semua media
+app.post("/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie("connect.sid");
+
+    res.json({
+      success: true,
+    });
+  });
+});
+
+// ==============================
+// 📥 GET ALL MEDIA
+// ==============================
+
 app.get("/api/media", async (req, res) => {
   try {
-    const data = await Media.find();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ message: "Gagal mengambil data media." });
-  }
-});
+    const media = await Media.find().sort({ createdAt: -1 });
 
-// 🔹 Tambah media baru
-app.post("/api/media", upload.single("mediaFile"), async (req, res) => {
-  try {
-    const { title, type, kelas, submateri } = req.body;
-    if (!req.file) {
-      return res
-        .status(400)
-        .json({ success: false, message: "File tidak ditemukan" });
-    }
-
-    const media = new Media({
-      title,
-      type,
-      kelas,
-      submateri,
-      url: `/uploads/${req.file.filename}`,
+    res.json(media);
+  } catch {
+    res.status(500).json({
+      success: false,
     });
-
-    await media.save();
-    res.json({
-      success: true,
-      message: "Media berhasil ditambahkan",
-      data: media,
-    });
-  } catch (err) {
-    console.error("Gagal menambah media:", err);
-    res.status(500).json({ success: false, message: "Gagal menambah media" });
   }
 });
 
-// 🟢 UPDATE MEDIA (dengan / tanpa file baru)
-// ===============================
-app.put("/api/media/:id", upload.single("mediaFile"), async (req, res) => {
-  try {
-    const { title, type, kelas, submateri } = req.body;
-    const updateData = { title, type, kelas, submateri };
+// ==============================
+// 📥 GET MEDIA BY CLASS
+// ==============================
 
-    // Jika ada file baru diunggah
-    if (req.file) {
-      updateData.url = `/uploads/${req.file.filename}`;
-    }
-
-    const updated = await Media.findByIdAndUpdate(
-      req.params.id,
-      { $set: updateData },
-      { new: true },
-    );
-
-    if (!updated) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Media tidak ditemukan" });
-    }
-
-    res.json({
-      success: true,
-      message: "Media berhasil diperbarui",
-      data: updated,
-    });
-  } catch (err) {
-    console.error("Gagal update media:", err);
-    res
-      .status(500)
-      .json({ success: false, message: "Gagal memperbarui media" });
-  }
-});
-
-// 🔹 Hapus media
-app.delete("/api/media/:id", checkAuth, async (req, res) => {
-  try {
-    const media = await Media.findById(req.params.id);
-    if (!media)
-      return res
-        .status(404)
-        .json({ success: false, message: "Media tidak ditemukan." });
-
-    if (media.url && fs.existsSync(path.join(__dirname, media.url))) {
-      fs.unlinkSync(path.join(__dirname, media.url));
-    }
-
-    await media.deleteOne();
-    res.json({ success: true, message: "Media berhasil dihapus!" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Gagal menghapus media." });
-  }
-});
-
-// 🔹 Ambil media berdasarkan kelas & submateri
 app.get("/api/media/:kelas/:submateri", async (req, res) => {
   try {
     const { kelas, submateri } = req.params;
-    const data = await Media.find({ kelas, submateri });
-    res.json(data);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Gagal mengambil data berdasarkan kelas." });
+
+    const media = await Media.find({
+      kelas,
+      submateri,
+    });
+
+    res.json(media);
+  } catch {
+    res.status(500).json({
+      success: false,
+    });
   }
 });
 
 // ==============================
-// 🚀 Jalankan Server
+// ➕ ADD MEDIA
 // ==============================
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () =>
-  console.log(`🚀 Server berjalan di http://localhost:${PORT}`),
+
+app.post(
+  "/api/media",
+  checkAuth,
+  upload.single("mediaFile"),
+  async (req, res) => {
+    try {
+      if (!req.file)
+        return res.status(400).json({
+          success: false,
+          message: "File tidak ada",
+        });
+
+      const media = new Media({
+        title: req.body.title,
+
+        type: req.body.type,
+
+        kelas: req.body.kelas,
+
+        submateri: req.body.submateri,
+
+        url: "/uploads/" + req.file.filename,
+      });
+
+      await media.save();
+
+      res.json({
+        success: true,
+        data: media,
+      });
+    } catch {
+      res.status(500).json({
+        success: false,
+      });
+    }
+  },
 );
+
+// ==============================
+// ✏️ UPDATE MEDIA
+// ==============================
+
+app.put(
+  "/api/media/:id",
+  checkAuth,
+  upload.single("mediaFile"),
+  async (req, res) => {
+    try {
+      const media = await Media.findById(req.params.id);
+
+      if (!media)
+        return res.status(404).json({
+          success: false,
+        });
+
+      media.title = req.body.title;
+      media.type = req.body.type;
+      media.kelas = req.body.kelas;
+      media.submateri = req.body.submateri;
+
+      if (req.file) {
+        // delete old file
+        if (media.url) {
+          const oldPath = path.join(__dirname, media.url);
+
+          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        }
+
+        media.url = "/uploads/" + req.file.filename;
+      }
+
+      await media.save();
+
+      res.json({
+        success: true,
+        data: media,
+      });
+    } catch {
+      res.status(500).json({
+        success: false,
+      });
+    }
+  },
+);
+
+// ==============================
+// ❌ DELETE MEDIA
+// ==============================
+
+app.delete("/api/media/:id", checkAuth, async (req, res) => {
+  try {
+    const media = await Media.findById(req.params.id);
+
+    if (!media)
+      return res.status(404).json({
+        success: false,
+      });
+
+    if (media.url) {
+      const filePath = path.join(__dirname, media.url);
+
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+
+    await media.deleteOne();
+
+    res.json({
+      success: true,
+    });
+  } catch {
+    res.status(500).json({
+      success: false,
+    });
+  }
+});
+
+// ==============================
+// 🚀 START SERVER
+// ==============================
+
+const PORT = process.env.PORT || 5001;
+
+app.listen(PORT, () => {
+  console.log("🚀 Server running on port", PORT);
+});
