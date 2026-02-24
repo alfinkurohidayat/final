@@ -384,12 +384,26 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ==============================
 
-mongoose
-  .connect(process.env.MONGO_URI, {
-    serverSelectionTimeoutMS: 30000,
-  })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
-app.listen(PORT, () => {
-  console.log("🚀 Server running on port", PORT);
-});
+const PORT = process.env.PORT || 5001;
+
+// CONNECT DB DULU BARU START SERVER
+async function startServer() {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 30000,
+    });
+
+    console.log("✅ MongoDB connected");
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ MongoDB connection failed:", err);
+
+    // hentikan app jika DB gagal
+    process.exit(1);
+  }
+}
+
+startServer();
