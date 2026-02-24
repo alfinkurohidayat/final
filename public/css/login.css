@@ -1,0 +1,177 @@
+/* Header */
+header {
+    background: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+header .logo {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #0077ff;
+}
+
+header nav a {
+    margin-left: 15px;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+}
+
+header nav a:hover {
+    color: #0077ff;
+}
+
+
+/* ===== Halaman Admin ===== */
+.admin-container {
+    max-width: 1000px;
+    margin: 30px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.admin-container h1 {
+    color: #0077ff;
+    margin-bottom: 20px;
+    font-size: 1.6rem;
+}
+
+/* Form Tambah Materi */
+.admin-form {
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.admin-form input[type="text"],
+.admin-form input[type="url"],
+.admin-form select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.admin-form button {
+    background-color: #0077ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease;
+}
+
+.admin-form button:hover {
+    background-color: #005ec2;
+}
+
+/* Tabel daftar materi */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 0.95rem;
+}
+
+.admin-table th,
+.admin-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+.admin-table th {
+    background-color: #f0f4ff;
+    color: #0077ff;
+}
+
+.admin-table tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+/* Tombol Edit dan Hapus */
+.btn-edit,
+.btn-delete {
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: white;
+    font-size: 0.85rem;
+    text-decoration: none;
+    margin-right: 5px;
+    transition: opacity 0.2s;
+}
+
+.btn-edit {
+    background-color: #10b981;
+}
+
+.btn-delete {
+    background-color: #ef4444;
+}
+
+.btn-edit:hover,
+.btn-delete:hover {
+    opacity: 0.9;
+}
+
+/* ===== Halaman Login Admin (opsional) ===== */
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.login-container h2 {
+    margin-bottom: 20px;
+    color: #0077ff;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: #0077ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.login-container button:hover {
+    background-color: #005ec2;
+}
+
+/* ===== Responsif Admin ===== */
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 15px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        font-size: 0.85rem;
+    }
+}

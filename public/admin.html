@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin | Website Pembelajaran</title>
+    <link rel="stylesheet" href="css/login.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo">Panel Admin</div>
+        <nav>
+            <a href="index.html">Beranda</a>
+            <a href="#" id="logoutBtn" style="display:none;">Logout</a>
+        </nav>
+    </header>
+
+    <!-- Container utama -->
+    <main class="admin-container">
+
+        <!-- Bagian Login -->
+        <section id="login-section" class="login-container">
+            <h2>Login Admin</h2>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button id="loginBtn">Masuk</button>
+            <p id="login-msg"></p>
+        </section>
+
+        <!-- Bagian Dashboard Admin -->
+        <section id="admin-section" style="display:none;">
+            <h1>Kelola Media Pembelajaran</h1>
+
+            <!-- Form tambah media -->
+            <form class="admin-form" enctype="multipart/form-data">
+                <input type="hidden" id="editId"> <!-- ✅ Tambahan untuk menyimpan ID yang diedit -->
+
+                <input type="text" id="title" placeholder="Judul Materi" required>
+                <select id="type" required>
+                    <option value="">Pilih Jenis</option>
+                    <option value="video">Video</option>
+                    <option value="audio">Audio</option>
+                </select>
+
+                <select id="classLevel" required>
+                    <option value="">Pilih Kelas</option>
+                    <option value="Class 10">Class 10</option>
+                    <option value="Class 11">Class 11</option>
+                    <option value="Class 12">Class 12</option>
+                </select>
+
+                <select id="category" required>
+                    <option value="">Pilih Kategori</option>
+                    <option value="Material">Material</option>
+                    <option value="Vocabulary">Vocabulary</option>
+                    <option value="Tasks">Tasks</option>
+                    <option value="Games">Games</option>
+                </select>
+
+                <input type="file" id="mediaFile" accept="video/*,audio/*">
+
+                <button type="button" id="addBtn">Tambah Media</button>
+            </form>
+
+
+
+
+
+            <!-- Tabel daftar media -->
+            <!-- Tabel daftar media -->
+            <table class="admin-table" id="media-admin-list">
+                <thead>
+                    <tr>
+                        <th>Judul</th>
+                        <th>Tipe</th>
+                        <th>Kelas</th>
+                        <th>Kategori</th>
+                        <th>URL</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody></tbody> <!-- ✅ Tambahkan ini -->
+            </table>
+
+
+        </section>
+
+    </main>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>

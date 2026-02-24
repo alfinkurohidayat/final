@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Pembelajaran</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="logo">E-learning</div>
+        <nav>
+            <a href="index.html">Beranda</a>
+            <a href="#">Tentang</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+    </header>
+
+    <div class="layout-container">
+        <aside class="menu-vertikal">
+            <a href="#" id="menu-resources" class="hover">
+                <ion-icon name="book-sharp"></ion-icon>Resources
+            </a>
+            <a href="#" id="menu-classes">
+                <ion-icon name="people-sharp"></ion-icon>Classes
+            </a>
+            <a href="#" id="menu-apps">
+                <ion-icon name="apps-sharp"></ion-icon>Apps
+            </a>
+            <a href="#" id="menu-support">
+                <ion-icon name="help-circle-sharp"></ion-icon>Support
+            </a>
+        </aside>
+
+        <!-- Konten yang bisa di-scroll -->
+        <div class="content-area">
+            <div class="submenu" id="submenu">
+                <h3 id="submenu-title">Menu</h3>
+                <ul id="submenu-content">
+                    <li>Pilih menu di kiri...</li>
+                </ul>
+            </div>
+
+            <main>
+                <h1 id="DM">Daftar Materi</h1>
+                <div id="daftar-materi" class="materi-grid"></div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
