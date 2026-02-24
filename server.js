@@ -46,13 +46,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+app.set("trust proxy", 1); // WAJIB untuk Render / HTTPS
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "rahasia-super-aman",
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    cookie: { maxAge: 1000 * 60 * 60 * 2 }, // sesi berlaku 2 jam
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 2,
+      secure: true, // WAJIB untuk HTTPS
+      sameSite: "none", // supaya bisa cross-domain
+    },
   }),
 );
 
@@ -94,12 +100,10 @@ app.post("/login", async (req, res) => {
     return res.json({ success: true, message: "Login berhasil!" });
   }
 
-  res
-    .status(401)
-    .json({
-      success: false,
-      message: "Login gagal! Username atau password salah.",
-    });
+  res.status(401).json({
+    success: false,
+    message: "Login gagal! Username atau password salah.",
+  });
 });
 
 // 🔍 Cek status login
