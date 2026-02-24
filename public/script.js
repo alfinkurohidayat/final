@@ -411,6 +411,14 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="materi-card" data-class="Class 11"><h3>Class 11</h3></div>
     <div class="materi-card" data-class="Class 12"><h3>Class 12</h3></div>
   `;
+
+    // ✅ FIX: tambahkan event click
+    document.querySelectorAll("[data-class]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const kelas = el.dataset.class;
+        showSubmateriList(kelas);
+      });
+    });
   }
 
   // 🔹 Menu navigasi utama
