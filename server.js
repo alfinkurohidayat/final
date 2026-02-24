@@ -10,28 +10,33 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
+// ==============================
+// PATH SETUP
+// ==============================
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
 // ==============================
-// 🔗 Koneksi MongoDB
+// CONNECT MONGODB
 // ==============================
+
 mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB terhubung"))
+  .connect(process.env.MONGO_URI, {
+    autoIndex: true,
+  })
+  .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB error:", err));
 
 // ==============================
-// 📦 Schema
+// SCHEMA
 // ==============================
+
 const mediaSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-    },
+    title: { type: String, required: true },
 
     type: {
       type: String,
@@ -39,20 +44,11 @@ const mediaSchema = new mongoose.Schema(
       required: true,
     },
 
-    url: {
-      type: String,
-      required: true,
-    },
+    url: { type: String, required: true },
 
-    kelas: {
-      type: String,
-      required: true,
-    },
+    kelas: { type: String, required: true },
 
-    submateri: {
-      type: String,
-      required: true,
-    },
+    submateri: { type: String, required: true },
   },
   { timestamps: true },
 );
@@ -60,33 +56,29 @@ const mediaSchema = new mongoose.Schema(
 const Media = mongoose.model("Media", mediaSchema);
 
 // ==============================
-// ⚙️ Middleware
+// MIDDLEWARE
 // ==============================
 
 app.use(express.json());
 
-app.use(
-  express.urlencoded({
-    extended: true,
-  }),
-);
+app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Render / HTTPS FIX
+// IMPORTANT FOR RENDER
 app.set("trust proxy", 1);
 
 // ==============================
-// 🔐 Session
+// SESSION CONFIG (FIX LOGIN ERROR)
 // ==============================
 
 app.use(
   session({
     name: "connect.sid",
 
-    secret: process.env.SESSION_SECRET || "super-secret",
+    secret: process.env.SESSION_SECRET || "super-secret-key",
 
     resave: false,
 
@@ -94,43 +86,44 @@ app.use(
 
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
+      collectionName: "sessions",
     }),
 
     cookie: {
       httpOnly: true,
 
-      secure: true,
+      secure: true, // required for Render HTTPS
 
       sameSite: "none",
 
-      maxAge: 1000 * 60 * 60 * 24,
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
     },
   }),
 );
 
 // ==============================
-// 🔐 Auth Middleware
+// AUTH MIDDLEWARE
 // ==============================
 
 function checkAuth(req, res, next) {
-  if (req.session.isAdmin) {
-    next();
-  } else {
-    res.status(403).json({
-      success: false,
-      message: "Unauthorized",
-    });
+  if (req.session && req.session.isAdmin) {
+    return next();
   }
+
+  res.status(401).json({
+    success: false,
+    message: "Unauthorized",
+  });
 }
 
 // ==============================
-// 📂 Setup Upload
+// UPLOAD CONFIG
 // ==============================
 
 const uploadDir = path.join(__dirname, "uploads");
 
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
@@ -148,7 +141,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ==============================
-// 🔑 LOGIN
+// LOGIN (FIX LOGIN BERULANG)
 // ==============================
 
 app.post("/login", (req, res) => {
@@ -158,22 +151,34 @@ app.post("/login", (req, res) => {
     username === process.env.ADMIN_USER &&
     password === process.env.ADMIN_PASS
   ) {
-    req.session.isAdmin = true;
+    // regenerate session FIX ERROR LOGIN KEDUA
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error("Session regenerate error:", err);
 
-    return res.json({
-      success: true,
-      message: "Login berhasil",
+        return res.status(500).json({
+          success: false,
+          message: "Session error",
+        });
+      }
+
+      req.session.isAdmin = true;
+
+      res.json({
+        success: true,
+        message: "Login berhasil",
+      });
+    });
+  } else {
+    res.status(401).json({
+      success: false,
+      message: "Username atau password salah",
     });
   }
-
-  res.status(401).json({
-    success: false,
-    message: "Username atau password salah",
-  });
 });
 
 // ==============================
-// 🔍 CHECK LOGIN
+// CHECK LOGIN
 // ==============================
 
 app.get("/check-login", (req, res) => {
@@ -183,12 +188,24 @@ app.get("/check-login", (req, res) => {
 });
 
 // ==============================
-// 🚪 LOGOUT
+// LOGOUT (FIX COOKIE CLEAR)
 // ==============================
 
 app.post("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie("connect.sid");
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Logout error:", err);
+
+      return res.status(500).json({
+        success: false,
+      });
+    }
+
+    res.clearCookie("connect.sid", {
+      path: "/",
+      secure: true,
+      sameSite: "none",
+    });
 
     res.json({
       success: true,
@@ -197,7 +214,7 @@ app.post("/logout", (req, res) => {
 });
 
 // ==============================
-// 📥 GET ALL MEDIA
+// GET ALL MEDIA
 // ==============================
 
 app.get("/api/media", async (req, res) => {
@@ -205,7 +222,7 @@ app.get("/api/media", async (req, res) => {
     const media = await Media.find().sort({ createdAt: -1 });
 
     res.json(media);
-  } catch {
+  } catch (err) {
     res.status(500).json({
       success: false,
     });
@@ -213,16 +230,14 @@ app.get("/api/media", async (req, res) => {
 });
 
 // ==============================
-// 📥 GET MEDIA BY CLASS
+// GET MEDIA BY CLASS
 // ==============================
 
 app.get("/api/media/:kelas/:submateri", async (req, res) => {
   try {
-    const { kelas, submateri } = req.params;
-
     const media = await Media.find({
-      kelas,
-      submateri,
+      kelas: req.params.kelas,
+      submateri: req.params.submateri,
     });
 
     res.json(media);
@@ -234,7 +249,7 @@ app.get("/api/media/:kelas/:submateri", async (req, res) => {
 });
 
 // ==============================
-// ➕ ADD MEDIA
+// ADD MEDIA
 // ==============================
 
 app.post(
@@ -246,7 +261,7 @@ app.post(
       if (!req.file)
         return res.status(400).json({
           success: false,
-          message: "File tidak ada",
+          message: "File tidak ditemukan",
         });
 
       const media = new Media({
@@ -267,7 +282,9 @@ app.post(
         success: true,
         data: media,
       });
-    } catch {
+    } catch (err) {
+      console.error(err);
+
       res.status(500).json({
         success: false,
       });
@@ -276,7 +293,7 @@ app.post(
 );
 
 // ==============================
-// ✏️ UPDATE MEDIA
+// UPDATE MEDIA
 // ==============================
 
 app.put(
@@ -298,11 +315,10 @@ app.put(
       media.submateri = req.body.submateri;
 
       if (req.file) {
-        // delete old file
         if (media.url) {
-          const oldPath = path.join(__dirname, media.url);
+          const oldFile = path.join(__dirname, media.url);
 
-          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+          if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
         }
 
         media.url = "/uploads/" + req.file.filename;
@@ -323,7 +339,7 @@ app.put(
 );
 
 // ==============================
-// ❌ DELETE MEDIA
+// DELETE MEDIA
 // ==============================
 
 app.delete("/api/media/:id", checkAuth, async (req, res) => {
@@ -354,7 +370,7 @@ app.delete("/api/media/:id", checkAuth, async (req, res) => {
 });
 
 // ==============================
-// 🚀 START SERVER
+// START SERVER
 // ==============================
 
 const PORT = process.env.PORT || 5001;
