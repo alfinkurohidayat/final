@@ -1,437 +1,252 @@
 // ==============================
-// 🔐 LOGIN & DASHBOARD ADMIN
+// 🌐 BASE URL CONFIG
+// ==============================
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5001"
+    : "https://final-o4p6.onrender.com";
+
+// ==============================
+// 🔐 LOGIN SYSTEM
 // ==============================
 document.addEventListener("DOMContentLoaded", async () => {
   const loginSection = document.getElementById("login-section");
   const adminSection = document.getElementById("admin-section");
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  const msg = document.getElementById("login-msg");
 
-  // cek login
+  // ==========================
+  // CEK STATUS LOGIN
+  // ==========================
   try {
-    const res = await fetch("http://localhost:5001/check-login", { credentials: "include" });
+    const res = await fetch(`${BASE_URL}/check-login`, {
+      credentials: "include",
+    });
+
     const data = await res.json();
+
     if (data.loggedIn) {
-      if (loginSection && adminSection) {
-        loginSection.style.display = "none";
-        adminSection.style.display = "block";
-        if (logoutBtn) logoutBtn.style.display = "inline-block";
-        await loadMediaList(); // tampilkan daftar media di admin
-      }
+      if (loginSection) loginSection.style.display = "none";
+      if (adminSection) adminSection.style.display = "block";
+      if (logoutBtn) logoutBtn.style.display = "inline-block";
+      await loadMediaList();
     }
   } catch (err) {
-    console.error("Gagal cek status login:", err);
+    console.error("Gagal cek login:", err);
   }
 
-  // login handler
+  // ==========================
+  // LOGIN BUTTON
+  // ==========================
   if (loginBtn) {
     loginBtn.addEventListener("click", async () => {
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
-      const msg = document.getElementById("login-msg");
 
       if (!username || !password) {
-        msg.textContent = "Isi username dan password!";
+        msg.textContent = "Isi username & password!";
         msg.style.color = "red";
         return;
       }
 
       try {
-        const res = await fetch("http://localhost:5001/login", {
+        const res = await fetch(`${BASE_URL}/login`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
+          headers: {
+            "Content-Type": "application/json",
+          },
           credentials: "include",
+          body: JSON.stringify({ username, password }),
         });
+
         const data = await res.json();
+
         if (data.success) {
           msg.textContent = "Login berhasil!";
           msg.style.color = "green";
-          // tampilkan panel admin
+
           loginSection.style.display = "none";
           adminSection.style.display = "block";
           if (logoutBtn) logoutBtn.style.display = "inline-block";
+
           await loadMediaList();
         } else {
           msg.textContent = data.message || "Login gagal";
           msg.style.color = "red";
         }
       } catch (err) {
-        console.error("Error login:", err);
+        console.error(err);
         msg.textContent = "Terjadi error saat login";
         msg.style.color = "red";
       }
     });
   }
 
-  // logout handler (global link di header)
-  const adminLink = document.querySelector('a[href="admin.html"]');
-  if (adminLink) {
-    adminLink.addEventListener("click", async (e) => {
-      if (logoutBtn && logoutBtn.style.display !== "none") {
-        e.preventDefault();
-        await fetch("http://localhost:5001/logout", { method: "POST", credentials: "include" });
-        localStorage.removeItem("lastClass");
-        localStorage.removeItem("lastSubmateri");
-        window.location.reload();
-      }
-    });
-  }
-
+  // ==========================
+  // LOGOUT BUTTON
+  // ==========================
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
-      await fetch("http://localhost:5001/logout", { method: "POST", credentials: "include" });
-      localStorage.removeItem("lastClass");
-      localStorage.removeItem("lastSubmateri");
+      await fetch(`${BASE_URL}/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      localStorage.clear();
       window.location.reload();
     });
   }
 });
 
 // ==============================
-// 🎬 CRUD MEDIA ADMIN (Tambah / Update / Delete)
+// 📦 CRUD MEDIA
 // ==============================
-const addBtnGlobal = document.getElementById("addBtn");
-if (addBtnGlobal) {
-  addBtnGlobal.addEventListener("click", async () => {
-    const editId = document.getElementById("editId")?.value || "";
+const addBtn = document.getElementById("addBtn");
+
+if (addBtn) {
+  addBtn.addEventListener("click", async () => {
+    const editId = document.getElementById("editId").value;
     const title = document.getElementById("title").value.trim();
     const type = document.getElementById("type").value;
-    const classLevel = document.getElementById("classLevel").value;
-    const category = document.getElementById("category").value;
+    const kelas = document.getElementById("classLevel").value;
+    const submateri = document.getElementById("category").value;
     const fileInput = document.getElementById("mediaFile");
 
-    if (!title || !type || !classLevel || !category) {
-      alert("Lengkapi semua kolom (judul, tipe, kelas, kategori)!");
+    if (!title || !type || !kelas || !submateri) {
+      alert("Lengkapi semua data!");
       return;
     }
 
-    // === 🟢 TAMBAH BARU (POST) ===
-    if (!editId) {
-      if (!fileInput || fileInput.files.length === 0) {
-        alert("Pilih file media (video/audio) sebelum menambah.");
-        return;
-      }
+    const fd = new FormData();
+    fd.append("title", title);
+    fd.append("type", type);
+    fd.append("kelas", kelas);
+    fd.append("submateri", submateri);
 
-      const fd = new FormData();
-      fd.append("title", title);
-      fd.append("type", type);
-      fd.append("kelas", classLevel);
-      fd.append("submateri", category);
-      fd.append("mediaFile", fileInput.files[0]);
+    if (fileInput.files.length) fd.append("mediaFile", fileInput.files[0]);
 
-      try {
-        const res = await fetch("http://localhost:5001/api/media", {
-          method: "POST",
-          body: fd,
+    try {
+      const res = await fetch(
+        editId ? `${BASE_URL}/api/media/${editId}` : `${BASE_URL}/api/media`,
+        {
+          method: editId ? "PUT" : "POST",
           credentials: "include",
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert("Media berhasil ditambahkan!");
-          resetAdminForm();
-          await loadMediaList();
-        } else {
-          alert("Gagal menambah media: " + (data.message || "Unknown"));
-        }
-      } catch (err) {
-        console.error("Gagal POST media:", err);
-        alert("Terjadi kesalahan saat menambah media.");
-      }
+          body: fd,
+        },
+      );
 
-    // === 🟢 UPDATE FILE DARI DEVICE (versi baru) ===
-        } else {
-      // Mode EDIT
-      if (fileInput && fileInput.files.length > 0) {
-        // Jika user ingin ganti file, kirim multipart pakai FormData
-        const fd = new FormData();
-        fd.append("title", title);
-        fd.append("type", type);
-        fd.append("kelas", classLevel);
-        fd.append("submateri", category);
-        fd.append("mediaFile", fileInput.files[0]);
+      const data = await res.json();
 
-        try {
-          const res = await fetch(`http://localhost:5001/api/media/${editId}`, {
-            method: "PUT",
-            body: fd,
-            credentials: "include",
-          });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            alert("Media dan file berhasil diperbarui!");
-            resetAdminForm();
-            await loadMediaList();
-          } else {
-            alert("Gagal update file: " + (data.message || "Unknown"));
-          }
-        } catch (err) {
-          console.error("Gagal PUT media:", err);
-          alert("Terjadi kesalahan saat memperbarui file.");
-        }
+      if (data.success) {
+        alert(editId ? "Media diperbarui!" : "Media ditambahkan!");
+        resetForm();
+        loadMediaList();
       } else {
-        // Jika tidak mengganti file, kirim JSON biasa
-        try {
-          const payload = { title, type, kelas: classLevel, submateri: category };
-          const res = await fetch(`http://localhost:5001/api/media/${editId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-            credentials: "include",
-          });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            alert("Data media berhasil diperbarui!");
-            resetAdminForm();
-            await loadMediaList();
-          } else {
-            alert("Gagal update data: " + (data.message || "Unknown"));
-          }
-        } catch (err) {
-          console.error("Gagal PUT media:", err);
-          alert("Terjadi kesalahan saat memperbarui data.");
-        }
+        alert(data.message || "Gagal menyimpan data");
       }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan");
     }
-
   });
 }
 
-function resetAdminForm() {
-  const form = document.querySelector(".admin-form");
-  if (form) form.reset();
-  const editIdEl = document.getElementById("editId");
-  if (editIdEl) editIdEl.value = "";
-  if (addBtnGlobal) addBtnGlobal.textContent = "Tambah Media";
-}
-
 // ==============================
-// 🧾 Fungsi Load & Render Daftar Media (Admin table)
+// 📋 LOAD MEDIA LIST
 // ==============================
 async function loadMediaList() {
   const tbody = document.querySelector("#media-admin-list tbody");
   if (!tbody) return;
 
   try {
-    const res = await fetch("http://localhost:5001/api/media", { credentials: "include" });
-    const media = await res.json();
+    const res = await fetch(`${BASE_URL}/api/media`, {
+      credentials: "include",
+    });
+
+    const data = await res.json();
 
     tbody.innerHTML = "";
-    if (!media || media.length === 0) {
+
+    if (!data.length) {
       tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">Belum ada media</td></tr>`;
       return;
     }
 
-    media.forEach((item) => {
-      const tr = document.createElement("tr");
-      const urlDisplay = item.url ? `http://localhost:5001${item.url}` : "-";
-      tr.innerHTML = `
-        <td>${escapeHtml(item.title)}</td>
-        <td>${escapeHtml(item.type)}</td>
-        <td>${escapeHtml(item.kelas || "-")}</td>
-        <td>${escapeHtml(item.submateri || "-")}</td>
-        <td>${item.url ? `<a href="${urlDisplay}" target="_blank">Lihat</a>` : "-"}</td>
-        <td>
-          <button class="editBtn" data-id="${item._id}">Edit</button>
-          <button class="deleteBtn" data-id="${item._id}">Hapus</button>
-        </td>
+    data.forEach((item) => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${escapeHtml(item.title)}</td>
+          <td>${escapeHtml(item.type)}</td>
+          <td>${escapeHtml(item.kelas)}</td>
+          <td>${escapeHtml(item.submateri)}</td>
+          <td>
+            <a href="${BASE_URL}${item.url}" target="_blank">Lihat</a>
+          </td>
+          <td>
+            <button onclick="editMedia('${item._id}')">Edit</button>
+            <button onclick="deleteMedia('${item._id}')">Hapus</button>
+          </td>
+        </tr>
       `;
-      tbody.appendChild(tr);
-    });
-
-    tbody.querySelectorAll(".deleteBtn").forEach((b) => {
-      b.addEventListener("click", async (e) => {
-        const id = e.target.dataset.id;
-        if (!confirm("Yakin ingin menghapus media ini?")) return;
-        try {
-          const res = await fetch(`http://localhost:5001/api/media/${id}`, {
-            method: "DELETE",
-            credentials: "include",
-          });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            alert("Media dihapus");
-            await loadMediaList();
-          } else {
-            alert("Gagal menghapus: " + (data.message || ""));
-          }
-        } catch (err) {
-          console.error("Gagal delete:", err);
-          alert("Terjadi kesalahan saat menghapus.");
-        }
-      });
-    });
-
-    tbody.querySelectorAll(".editBtn").forEach((b) => {
-      b.addEventListener("click", async (e) => {
-        const id = e.target.dataset.id;
-        const item = media.find((m) => m._id === id);
-        if (!item) return alert("Data tidak ditemukan untuk diedit.");
-
-        document.getElementById("editId").value = item._id;
-        document.getElementById("title").value = item.title || "";
-        document.getElementById("type").value = item.type || "";
-        document.getElementById("classLevel").value = item.kelas || "";
-        document.getElementById("category").value = item.submateri || "";
-        addBtnGlobal.textContent = "Update Media";
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
     });
   } catch (err) {
-    console.error("Gagal memuat daftar media:", err);
+    console.error("Gagal load media:", err);
   }
 }
 
 // ==============================
-// 🧭 NAVIGASI & TAMPILAN MATERI PADA HALAMAN INDEX
+// ❌ DELETE MEDIA
 // ==============================
-// (seluruh bagian ini tetap utuh tanpa diubah)
-document.addEventListener("DOMContentLoaded", () => {
-  const menuItems = document.querySelectorAll(".menu-vertikal a");
-  const submenu = document.getElementById("submenu");
-  const submenuTitle = document.getElementById("submenu-title");
-  const submenuContent = document.getElementById("submenu-content");
-  const daftarMateri = document.getElementById("daftar-materi");
-  const DM = document.getElementById("DM");
+async function deleteMedia(id) {
+  if (!confirm("Yakin hapus media?")) return;
 
-  // fungsi untuk ubah isi DM
-  function ubahDM(teks) {
-    if (DM) DM.innerHTML = `<h3>${teks}</h3>`;
-  }
-
-  async function tampilkanMateri(kelas, submateri) {
-    localStorage.setItem("lastClass", kelas);
-    localStorage.setItem("lastSubmateri", submateri);
-    ubahDM(`Materi ${kelas} - ${submateri}`);
-
-    try {
-      const res = await fetch(`/api/media/${encodeURIComponent(kelas)}/${encodeURIComponent(submateri)}`);
-      const data = await res.json();
-    
-      daftarMateri.innerHTML = "";
-      if (!data || data.length === 0) {
-        daftarMateri.innerHTML = "<p>Tidak ada materi tersedia.</p>";
-        return;
-      }
-
-      data.forEach((item) => {
-        let mediaPreview = "";
-        if (item.type === "video") {
-          mediaPreview = `<video width="100%" height="200" controls src="http://localhost:5001${item.url}"></video>`;
-        } else if (item.type === "audio") {
-          mediaPreview = `<audio controls src="http://localhost:5001${item.url}"></audio>`;
-        }
-        const div = document.createElement("div");
-        div.className = "materi-card";
-        div.innerHTML = `<h3>${escapeHtml(item.title)}</h3>${mediaPreview}`;
-        daftarMateri.appendChild(div);
-      });
-    } catch (err) {
-      console.error("Gagal memuat materi:", err);
-      daftarMateri.innerHTML = "<p>Terjadi kesalahan saat memuat materi.</p>";
-    }
-  }
-
-  function showSubmateriList(kelas) {
-    submenuTitle.textContent = kelas;
-    ubahDM(`Daftar Materi - ${kelas}`);
-    submenuContent.innerHTML = `
-      <li class="sub-item" data-sub="Material">Material</li>
-      <li class="sub-item" data-sub="Vocabulary">Vocabulary</li>
-      <li class="sub-item" data-sub="Tasks">Tasks</li>
-      <li class="sub-item" data-sub="Games">Games</li>
-    `;
-    submenu.classList.add("show");
-
-    daftarMateri.innerHTML = `
-      <div class="materi-card" data-sub="Material"><h3>Material</h3></div>
-      <div class="materi-card" data-sub="Vocabulary"><h3>Vocabulary</h3></div>
-      <div class="materi-card" data-sub="Tasks"><h3>Tasks</h3></div>
-      <div class="materi-card" data-sub="Games"><h3>Games</h3></div>
-    `;
-
-    document.querySelectorAll(".sub-item, .materi-card[data-sub]").forEach((el) => {
-      el.addEventListener("click", () => tampilkanMateri(kelas, el.dataset.sub));
-    });
-  }
-
-  function showClassList() {
-    submenuTitle.textContent = "Resources";
-    ubahDM("Daftar Kelas");
-    submenuContent.innerHTML = `
-      <li class="dropdown" data-class="Class 10">Class 10 ▾</li>
-      <li class="dropdown" data-class="Class 11">Class 11 ▾</li>
-      <li class="dropdown" data-class="Class 12">Class 12 ▾</li>
-    `;
-    submenu.classList.add("show");
-
-    daftarMateri.innerHTML = `
-      <div class="materi-card" data-class="Class 10"><h3>Class 10</h3></div>
-      <div class="materi-card" data-class="Class 11"><h3>Class 11</h3></div>
-      <div class="materi-card" data-class="Class 12"><h3>Class 12</h3></div>
-    `;
-
-    document.querySelectorAll(".materi-card[data-class], .dropdown").forEach((el) => {
-      el.addEventListener("click", () => showSubmateriList(el.dataset.class));
-    });
-  }
-
-  // 🔹 Menu navigasi utama
-  menuItems.forEach((item) => {
-    item.addEventListener("click", (e) => {
-      e.preventDefault();
-      menuItems.forEach((m) => m.classList.remove("hover"));
-      item.classList.add("hover");
-
-      switch (item.id) {
-        case "menu-resources":
-          showClassList();
-          break;
-        case "menu-classes":
-          submenuTitle.textContent = "Classes";
-          ubahDM("Halaman Classes");
-          submenuContent.innerHTML = "<li>Daftar kelas akan ditambahkan.</li>";
-          daftarMateri.innerHTML = "";
-          break;
-        case "menu-apps":
-          submenuTitle.textContent = "Apps";
-          ubahDM("Aplikasi Belajar");
-          submenuContent.innerHTML = "<li>Aplikasi belajar akan ditampilkan di sini.</li>";
-          daftarMateri.innerHTML = "";
-          break;
-        case "menu-support":
-          submenuTitle.textContent = "Support";
-          ubahDM("Pusat Bantuan");
-          submenuContent.innerHTML = "<li>Hubungi admin untuk bantuan.</li>";
-          daftarMateri.innerHTML = "";
-          break;
-        default:
-          ubahDM("Selamat Datang!");
-      }
-    });
+  const res = await fetch(`${BASE_URL}/api/media/${id}`, {
+    method: "DELETE",
+    credentials: "include",
   });
 
-  // Tampilkan pertama kali
-  showClassList();
+  const data = await res.json();
 
-  const lastClass = localStorage.getItem("lastClass");
-  const lastSubmateri = localStorage.getItem("lastSubmateri");
-  if (lastClass && lastSubmateri) {
-    setTimeout(() => {
-      tampilkanMateri(lastClass, lastSubmateri);
-      submenuTitle.textContent = lastClass;
-      submenu.classList.add("show");
-    }, 300);
-  }
-});
-
+  if (data.success) loadMediaList();
+}
 
 // ==============================
-// Helper
+// ✏ EDIT MEDIA
 // ==============================
-function escapeHtml(unsafe) {
-  if (!unsafe && unsafe !== 0) return "";
-  return String(unsafe)
+async function editMedia(id) {
+  const res = await fetch(`${BASE_URL}/api/media`, {
+    credentials: "include",
+  });
+
+  const data = await res.json();
+  const item = data.find((x) => x._id === id);
+
+  if (!item) return;
+
+  document.getElementById("editId").value = item._id;
+  document.getElementById("title").value = item.title;
+  document.getElementById("type").value = item.type;
+  document.getElementById("classLevel").value = item.kelas;
+  document.getElementById("category").value = item.submateri;
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ==============================
+// 🔄 RESET FORM
+// ==============================
+function resetForm() {
+  document.querySelector(".admin-form").reset();
+  document.getElementById("editId").value = "";
+}
+
+// ==============================
+// 🔒 ESCAPE HTML
+// ==============================
+function escapeHtml(text) {
+  if (!text) return "";
+  return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
