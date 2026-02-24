@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // cek login
   try {
-    const res = await fetch("https://final-o4p6.onrender.com/check-login", {
+    const res = await fetch("https://final-9pgj.onrender.com/check-login", {
       credentials: "include",
     });
     const data = await res.json();
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       try {
-        const res = await fetch("https://final-o4p6.onrender.com/login", {
+        const res = await fetch("https://final-9pgj.onrender.com/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),
@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     adminLink.addEventListener("click", async (e) => {
       if (logoutBtn && logoutBtn.style.display !== "none") {
         e.preventDefault();
-        await fetch("https://final-o4p6.onrender.com/logout", {
+        await fetch("https://final-9pgj.onrender.com/logout", {
           method: "POST",
           credentials: "include",
         });
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
-      await fetch("https://final-o4p6.onrender.com/logout", {
+      await fetch("https://final-9pgj.onrender.com/logout", {
         method: "POST",
         credentials: "include",
       });
@@ -129,7 +129,7 @@ if (addBtnGlobal) {
       fd.append("mediaFile", fileInput.files[0]);
 
       try {
-        const res = await fetch("https://final-o4p6.onrender.com/api/media", {
+        const res = await fetch("https://final-9pgj.onrender.com/api/media", {
           method: "POST",
           body: fd,
           credentials: "include",
@@ -161,7 +161,7 @@ if (addBtnGlobal) {
 
         try {
           const res = await fetch(
-            `https://final-o4p6.onrender.com/api/media/${editId}`,
+            `https://final-9pgj.onrender.com/api/media/${editId}`,
             {
               method: "PUT",
               body: fd,
@@ -190,7 +190,7 @@ if (addBtnGlobal) {
             submateri: category,
           };
           const res = await fetch(
-            `https://final-o4p6.onrender.com/api/media/${editId}`,
+            `https://final-9pgj.onrender.com/api/media/${editId}`,
             {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
@@ -231,7 +231,7 @@ async function loadMediaList() {
   if (!tbody) return;
 
   try {
-    const res = await fetch("https://final-o4p6.onrender.com/api/media", {
+    const res = await fetch("https://final-9pgj.onrender.com/api/media", {
       credentials: "include",
     });
     const media = await res.json();
@@ -245,7 +245,7 @@ async function loadMediaList() {
     media.forEach((item) => {
       const tr = document.createElement("tr");
       const urlDisplay = item.url
-        ? `https://final-o4p6.onrender.com${item.url}`
+        ? `https://final-9pgj.onrender.com${item.url}`
         : "-";
       tr.innerHTML = `
         <td>${escapeHtml(item.title)}</td>
@@ -267,7 +267,7 @@ async function loadMediaList() {
         if (!confirm("Yakin ingin menghapus media ini?")) return;
         try {
           const res = await fetch(
-            `https://final-o4p6.onrender.com/api/media/${id}`,
+            `https://final-9pgj.onrender.com/api/media/${id}`,
             {
               method: "DELETE",
               credentials: "include",
@@ -331,7 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const res = await fetch(
-        `https://final-o4p6.onrender.com/api/media/${encodeURIComponent(kelas)}/${encodeURIComponent(submateri)}`,
+        `https://final-9pgj.onrender.com/api/media/${encodeURIComponent(kelas)}/${encodeURIComponent(submateri)}`,
       );
       const data = await res.json();
 
@@ -344,9 +344,9 @@ document.addEventListener("DOMContentLoaded", () => {
       data.forEach((item) => {
         let mediaPreview = "";
         if (item.type === "video") {
-          mediaPreview = `<video width="100%" height="200" controls src="https://final-o4p6.onrender.com${item.url}"></video>`;
+          mediaPreview = `<video width="100%" height="200" controls src="https://final-9pgj.onrender.com${item.url}"></video>`;
         } else if (item.type === "audio") {
-          mediaPreview = `<audio controls src="https://final-o4p6.onrender.com${item.url}"></audio>`;
+          mediaPreview = `<audio controls src="https://final-9pgj.onrender.com${item.url}"></audio>`;
         }
         const div = document.createElement("div");
         div.className = "materi-card";
