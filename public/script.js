@@ -360,7 +360,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showSubmateriList(kelas) {
-    submenuTitle.textContent = kelas;
+    if (submenuTitle) {
+      submenuTitle.textContent = kelas;
+    }
     ubahDM(`Daftar Materi - ${kelas}`);
     submenuContent.innerHTML = `
       <li class="sub-item" data-sub="Material">Material</li>
@@ -387,26 +389,28 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showClassList() {
+    if (!submenuTitle || !submenuContent || !submenu || !daftarMateri) {
+      console.warn("Element navigation tidak ditemukan, skip showClassList");
+      return;
+    }
+
     submenuTitle.textContent = "Resources";
+
     ubahDM("Daftar Kelas");
+
     submenuContent.innerHTML = `
-      <li class="dropdown" data-class="Class 10">Class 10 ▾</li>
-      <li class="dropdown" data-class="Class 11">Class 11 ▾</li>
-      <li class="dropdown" data-class="Class 12">Class 12 ▾</li>
-    `;
+    <li class="dropdown" data-class="Class 10">Class 10 ▾</li>
+    <li class="dropdown" data-class="Class 11">Class 11 ▾</li>
+    <li class="dropdown" data-class="Class 12">Class 12 ▾</li>
+  `;
+
     submenu.classList.add("show");
 
     daftarMateri.innerHTML = `
-      <div class="materi-card" data-class="Class 10"><h3>Class 10</h3></div>
-      <div class="materi-card" data-class="Class 11"><h3>Class 11</h3></div>
-      <div class="materi-card" data-class="Class 12"><h3>Class 12</h3></div>
-    `;
-
-    document
-      .querySelectorAll(".materi-card[data-class], .dropdown")
-      .forEach((el) => {
-        el.addEventListener("click", () => showSubmateriList(el.dataset.class));
-      });
+    <div class="materi-card" data-class="Class 10"><h3>Class 10</h3></div>
+    <div class="materi-card" data-class="Class 11"><h3>Class 11</h3></div>
+    <div class="materi-card" data-class="Class 12"><h3>Class 12</h3></div>
+  `;
   }
 
   // 🔹 Menu navigasi utama

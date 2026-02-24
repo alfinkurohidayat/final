@@ -6,13 +6,10 @@ import dotenv from "dotenv";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
+import cors from "cors";
 import { fileURLToPath } from "url";
 
 dotenv.config();
-
-// ==============================
-// PATH SETUP
-// ==============================
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,15 +17,82 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // ==============================
+// IMPORTANT FOR RENDER
+// ==============================
+
+app.set("trust proxy", 1);
+
+// ==============================
+// CORS FIX (WAJIB UNTUK RENDER)
+// ==============================
+
+app.use(
+  cors({
+    origin: [
+      "https://final-9pgj.onrender.com",
+      "https://final-o4p6.onrender.com",
+      "http://localhost:3000",
+      "http://localhost:5000",
+    ],
+    credentials: true,
+  }),
+);
+
+// ==============================
+// BODY PARSER
+// ==============================
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ==============================
+// STATIC
+// ==============================
+
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ==============================
 // CONNECT MONGODB
 // ==============================
 
 mongoose
-  .connect(process.env.MONGO_URI, {
-    autoIndex: true,
-  })
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB error:", err));
+
+// ==============================
+// SESSION (FULL FIX RENDER)
+// ==============================
+
+app.use(
+  session({
+    name: "connect.sid",
+
+    secret: process.env.SESSION_SECRET || "super-secret",
+
+    resave: false,
+
+    saveUninitialized: false,
+
+    proxy: true,
+
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      ttl: 60 * 60 * 24,
+    }),
+
+    cookie: {
+      httpOnly: true,
+
+      secure: true,
+
+      sameSite: "none",
+
+      maxAge: 1000 * 60 * 60 * 24,
+    },
+  }),
+);
 
 // ==============================
 // SCHEMA
@@ -36,70 +100,16 @@ mongoose
 
 const mediaSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
-
-    type: {
-      type: String,
-      enum: ["video", "audio"],
-      required: true,
-    },
-
-    url: { type: String, required: true },
-
-    kelas: { type: String, required: true },
-
-    submateri: { type: String, required: true },
+    title: String,
+    type: String,
+    url: String,
+    kelas: String,
+    submateri: String,
   },
   { timestamps: true },
 );
 
 const Media = mongoose.model("Media", mediaSchema);
-
-// ==============================
-// MIDDLEWARE
-// ==============================
-
-app.use(express.json());
-
-app.use(express.urlencoded({ extended: true }));
-
-app.use(express.static(path.join(__dirname, "public")));
-
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// IMPORTANT FOR RENDER
-app.set("trust proxy", 1);
-
-// ==============================
-// SESSION CONFIG (FIX LOGIN ERROR)
-// ==============================
-
-app.use(
-  session({
-    name: "connect.sid",
-
-    secret: process.env.SESSION_SECRET || "super-secret-key",
-
-    resave: false,
-
-    saveUninitialized: false,
-
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI,
-      collectionName: "sessions",
-    }),
-
-    cookie: {
-      httpOnly: true,
-
-      secure: true, // required for Render HTTPS
-
-      sameSite: "none",
-
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    },
-  }),
-);
 
 // ==============================
 // AUTH MIDDLEWARE
@@ -110,7 +120,7 @@ function checkAuth(req, res, next) {
     return next();
   }
 
-  res.status(401).json({
+  return res.status(401).json({
     success: false,
     message: "Unauthorized",
   });
@@ -127,21 +137,18 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
+  destination: (req, file, cb) => cb(null, uploadDir),
 
   filename: (req, file, cb) => {
-    const cleanName = file.originalname.replace(/\s+/g, "_");
-
-    cb(null, Date.now() + "-" + cleanName);
+    const clean = file.originalname.replace(/\s+/g, "_");
+    cb(null, Date.now() + "-" + clean);
   },
 });
 
 const upload = multer({ storage });
 
 // ==============================
-// LOGIN (FIX LOGIN BERULANG)
+// LOGIN (FULL FIX)
 // ==============================
 
 app.post("/login", (req, res) => {
@@ -151,7 +158,6 @@ app.post("/login", (req, res) => {
     username === process.env.ADMIN_USER &&
     password === process.env.ADMIN_PASS
   ) {
-    // regenerate session FIX ERROR LOGIN KEDUA
     req.session.regenerate((err) => {
       if (err) {
         console.error("Session regenerate error:", err);
@@ -164,9 +170,15 @@ app.post("/login", (req, res) => {
 
       req.session.isAdmin = true;
 
-      res.json({
-        success: true,
-        message: "Login berhasil",
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+        }
+
+        return res.json({
+          success: true,
+          message: "Login berhasil",
+        });
       });
     });
   } else {
@@ -183,24 +195,16 @@ app.post("/login", (req, res) => {
 
 app.get("/check-login", (req, res) => {
   res.json({
-    loggedIn: !!req.session.isAdmin,
+    loggedIn: req.session?.isAdmin || false,
   });
 });
 
 // ==============================
-// LOGOUT (FIX COOKIE CLEAR)
+// LOGOUT (FULL FIX)
 // ==============================
 
 app.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Logout error:", err);
-
-      return res.status(500).json({
-        success: false,
-      });
-    }
-
+  req.session.destroy(() => {
     res.clearCookie("connect.sid", {
       path: "/",
       secure: true,
@@ -261,22 +265,16 @@ app.post(
       if (!req.file)
         return res.status(400).json({
           success: false,
-          message: "File tidak ditemukan",
+          message: "File tidak ada",
         });
 
-      const media = new Media({
+      const media = await Media.create({
         title: req.body.title,
-
         type: req.body.type,
-
         kelas: req.body.kelas,
-
         submateri: req.body.submateri,
-
         url: "/uploads/" + req.file.filename,
       });
-
-      await media.save();
 
       res.json({
         success: true,
@@ -367,6 +365,19 @@ app.delete("/api/media/:id", checkAuth, async (req, res) => {
       success: false,
     });
   }
+});
+
+// ==============================
+// ERROR HANDLER
+// ==============================
+
+app.use((err, req, res, next) => {
+  console.error("SERVER ERROR:", err);
+
+  res.status(500).json({
+    success: false,
+    error: err.message,
+  });
 });
 
 // ==============================
