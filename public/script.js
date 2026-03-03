@@ -343,10 +343,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       data.forEach((item) => {
         let mediaPreview = "";
-        if (item.type === "video") {
-          mediaPreview = `<video width="100%" height="200" controls src="https://final-9pgj.onrender.com${item.url}"></video>`;
-        } else if (item.type === "audio") {
-          mediaPreview = `<audio controls src="https://final-9pgj.onrender.com${item.url}"></audio>`;
+        if (item.type === "image") {
+          mediaPreview = `
+    <img 
+      src="https://final-9pgj.onrender.com${item.url}" 
+      style="width:100%; height:200px; object-fit:cover; border-radius:8px;"
+    />
+  `;
         }
         const div = document.createElement("div");
         div.className = "materi-card";
@@ -356,6 +359,54 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       console.error("Gagal memuat materi:", err);
       daftarMateri.innerHTML = "<p>Terjadi kesalahan saat memuat materi.</p>";
+    }
+  }
+
+  async function tampilkanMediaApps() {
+    ubahDM("Media Audio & Video");
+
+    try {
+      const res = await fetch(`https://final-9pgj.onrender.com/api/media`);
+      const data = await res.json();
+
+      daftarMateri.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        daftarMateri.innerHTML = "<p>Tidak ada media tersedia.</p>";
+        return;
+      }
+
+      data.forEach((item) => {
+        if (item.type !== "video" && item.type !== "audio") return;
+
+        let mediaPreview = "";
+
+        if (item.type === "video") {
+          mediaPreview = `
+          <video width="100%" height="200" controls
+            src="https://final-9pgj.onrender.com${item.url}">
+          </video>
+        `;
+        } else if (item.type === "audio") {
+          mediaPreview = `
+          <audio controls
+            src="https://final-9pgj.onrender.com${item.url}">
+          </audio>
+        `;
+        }
+
+        const div = document.createElement("div");
+        div.className = "materi-card";
+        div.innerHTML = `
+        <h3>${escapeHtml(item.title)}</h3>
+        ${mediaPreview}
+      `;
+
+        daftarMateri.appendChild(div);
+      });
+    } catch (err) {
+      console.error("Gagal memuat media:", err);
+      daftarMateri.innerHTML = "<p>Terjadi kesalahan saat memuat media.</p>";
     }
   }
 
@@ -439,11 +490,11 @@ document.addEventListener("DOMContentLoaded", () => {
           daftarMateri.innerHTML = "";
           break;
         case "menu-apps":
-          submenuTitle.textContent = "Apps";
-          ubahDM("Aplikasi Belajar");
+          submenuTitle.textContent = "Media";
           submenuContent.innerHTML =
-            "<li>Aplikasi belajar akan ditampilkan di sini.</li>";
-          daftarMateri.innerHTML = "";
+            "<li>Media belajar akan ditampilkan di sini.</li>";
+          submenu.classList.add("show");
+          tampilkanMediaApps();
           break;
         case "menu-support":
           submenuTitle.textContent = "Support";
