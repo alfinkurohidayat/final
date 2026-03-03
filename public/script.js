@@ -345,12 +345,15 @@ document.addEventListener("DOMContentLoaded", () => {
         // ❌ JANGAN tampilkan selain image
         if (item.type !== "image") return;
 
+        const hasOverlay = item.overlayType && item.overlayUrl;
+
         const mediaPreview = `
-    <img 
-      src="https://final-9pgj.onrender.com${item.url}" 
-      style="width:100%; height:200px; object-fit:cover; border-radius:8px;"
-    />
-  `;
+  <img 
+    src="https://final-9pgj.onrender.com${item.url}" 
+    style="width:100%; height:200px; object-fit:cover; border-radius:8px; cursor:pointer;"
+    ${hasOverlay ? `onclick="openOverlay('${item.overlayType}','https://final-9pgj.onrender.com${item.overlayUrl}')"` : ""}
+  />
+`;
 
         const div = document.createElement("div");
         div.className = "materi-card";
@@ -542,3 +545,50 @@ function escapeHtml(unsafe) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+//pop up
+
+const typeSelect = document.getElementById("type");
+const overlayType = document.getElementById("overlayType");
+const overlayFile = document.getElementById("overlayFile");
+
+// hanya tampil jika type = image
+typeSelect.addEventListener("change", () => {
+  if (typeSelect.value === "image") {
+    overlayType.style.display = "block";
+  } else {
+    overlayType.value = "";
+    overlayType.style.display = "none";
+    overlayFile.style.display = "none";
+  }
+});
+
+// tampilkan file jika overlay dipilih
+overlayType.addEventListener("change", () => {
+  if (overlayType.value) {
+    overlayFile.style.display = "block";
+    overlayFile.accept = overlayType.value === "audio" ? "audio/*" : "video/*";
+  } else {
+    overlayFile.style.display = "none";
+  }
+});
+
+function openOverlay(type, url) {
+  const modal = document.getElementById("mediaModal");
+  const body = document.getElementById("modalBody");
+
+  if (type === "video") {
+    body.innerHTML = `<video width="100%" controls autoplay src="${url}"></video>`;
+  }
+
+  if (type === "audio") {
+    body.innerHTML = `<audio controls autoplay src="${url}"></audio>`;
+  }
+
+  modal.style.display = "flex";
+}
+
+document.getElementById("closeModal").onclick = function () {
+  document.getElementById("mediaModal").style.display = "none";
+  document.getElementById("modalBody").innerHTML = "";
+};

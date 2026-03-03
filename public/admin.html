@@ -61,6 +61,14 @@
                     <option value="Games">Games</option>
                 </select>
 
+                <select id="overlayType">
+                    <option value="">Tanpa Media Tambahan</option>
+                    <option value="audio">Sisip Audio</option>
+                    <option value="video">Sisip Video</option>
+                </select>
+
+                <input type="file" id="overlayFile" accept="audio/*,video/*" style="display:none;">
+
                 <input type="file" id="mediaFile" accept="video/*,audio/*,image/*">
 
                 <button type="button" id="addBtn">Tambah Media</button>
