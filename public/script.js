@@ -342,18 +342,23 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       data.forEach((item) => {
-        let mediaPreview = "";
-        if (item.type === "image") {
-          mediaPreview = `
+        // ❌ JANGAN tampilkan selain image
+        if (item.type !== "image") return;
+
+        const mediaPreview = `
     <img 
       src="https://final-9pgj.onrender.com${item.url}" 
       style="width:100%; height:200px; object-fit:cover; border-radius:8px;"
     />
   `;
-        }
+
         const div = document.createElement("div");
         div.className = "materi-card";
-        div.innerHTML = `<h3>${escapeHtml(item.title)}</h3>${mediaPreview}`;
+        div.innerHTML = `
+    <h3>${escapeHtml(item.title)}</h3>
+    ${mediaPreview}
+  `;
+
         daftarMateri.appendChild(div);
       });
     } catch (err) {
@@ -377,30 +382,33 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       data.forEach((item) => {
-        if (item.type !== "video" && item.type !== "audio") return;
+        // ❌ Abaikan image
+        if (item.type === "image") return;
 
         let mediaPreview = "";
 
         if (item.type === "video") {
           mediaPreview = `
-          <video width="100%" height="200" controls
-            src="https://final-9pgj.onrender.com${item.url}">
-          </video>
-        `;
-        } else if (item.type === "audio") {
+      <video width="100%" height="200" controls
+        src="https://final-9pgj.onrender.com${item.url}">
+      </video>
+    `;
+        }
+
+        if (item.type === "audio") {
           mediaPreview = `
-          <audio controls
-            src="https://final-9pgj.onrender.com${item.url}">
-          </audio>
-        `;
+      <audio controls
+        src="https://final-9pgj.onrender.com${item.url}">
+      </audio>
+    `;
         }
 
         const div = document.createElement("div");
         div.className = "materi-card";
         div.innerHTML = `
-        <h3>${escapeHtml(item.title)}</h3>
-        ${mediaPreview}
-      `;
+    <h3>${escapeHtml(item.title)}</h3>
+    ${mediaPreview}
+  `;
 
         daftarMateri.appendChild(div);
       });
