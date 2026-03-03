@@ -105,6 +105,8 @@ const mediaSchema = new mongoose.Schema(
     url: String,
     kelas: String,
     submateri: String,
+    overlayType: String,
+    overlayUrl: String,
   },
   { timestamps: true },
 );

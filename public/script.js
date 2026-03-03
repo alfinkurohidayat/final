@@ -357,10 +357,28 @@ document.addEventListener("DOMContentLoaded", () => {
         img.style.height = "200px";
         img.style.objectFit = "cover";
         img.style.borderRadius = "8px";
-        img.style.cursor = "pointer";
+
+        if (item.overlayType && item.overlayUrl) {
+          img.style.cursor = "pointer";
+
+          img.addEventListener("click", () => {
+            openOverlay(
+              item.overlayType,
+              `https://final-9pgj.onrender.com${item.overlayUrl}`,
+            );
+          });
+        }
 
         img.addEventListener("click", () => {
-          openOverlay("image", img.src);
+          // Jika tidak ada overlay, jangan lakukan apa-apa
+          if (!item.overlayType || !item.overlayUrl) {
+            return;
+          }
+
+          openOverlay(
+            item.overlayType,
+            `https://final-9pgj.onrender.com${item.overlayUrl}`,
+          );
         });
 
         card.appendChild(title);
