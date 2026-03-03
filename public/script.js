@@ -582,3 +582,40 @@ if (closeBtn) {
     document.getElementById("modalBody").innerHTML = "";
   };
 }
+// ==============================
+// POPUP OVERLAY FUNCTION
+// ==============================
+
+function openOverlay(type, url) {
+  const modal = document.getElementById("mediaModal");
+  const body = document.getElementById("modalBody");
+
+  if (!modal || !body) return;
+
+  body.innerHTML = "";
+
+  if (type === "image") {
+    body.innerHTML = `<img src="${url}" style="width:100%">`;
+  }
+
+  if (type === "video") {
+    body.innerHTML = `
+      <video controls style="width:100%">
+        <source src="${url}">
+      </video>
+    `;
+  }
+
+  if (type === "audio") {
+    body.innerHTML = `
+      <audio controls style="width:100%">
+        <source src="${url}">
+      </audio>
+    `;
+  }
+
+  modal.style.display = "flex";
+}
+
+// WAJIB karena kamu pakai type="module"
+window.openOverlay = openOverlay;
