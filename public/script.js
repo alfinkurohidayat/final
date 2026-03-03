@@ -336,54 +336,39 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
 
       daftarMateri.innerHTML = "";
-
       if (!data || data.length === 0) {
         daftarMateri.innerHTML = "<p>Tidak ada materi tersedia.</p>";
         return;
       }
 
       data.forEach((item) => {
+        // ❌ JANGAN tampilkan selain image
         if (item.type !== "image") return;
 
-        const card = document.createElement("div");
-        card.className = "materi-card";
-
-        const title = document.createElement("h3");
-        title.textContent = item.title;
-
+        const hasOverlay = item.overlayType && item.overlayUrl;
         const img = document.createElement("img");
+
         img.src = `https://final-9pgj.onrender.com${item.url}`;
         img.style.width = "100%";
         img.style.height = "200px";
         img.style.objectFit = "cover";
         img.style.borderRadius = "8px";
-
-        if (item.overlayType && item.overlayUrl) {
-          img.style.cursor = "pointer";
-
-          img.addEventListener("click", () => {
-            openOverlay(
-              item.overlayType,
-              `https://final-9pgj.onrender.com${item.overlayUrl}`,
-            );
-          });
-        }
+        img.style.cursor = "pointer";
 
         img.addEventListener("click", () => {
-          // Jika tidak ada overlay, jangan lakukan apa-apa
-          if (!item.overlayType || !item.overlayUrl) {
-            return;
-          }
-
-          openOverlay(
-            item.overlayType,
-            `https://final-9pgj.onrender.com${item.overlayUrl}`,
-          );
+          openOverlay("image", `https://final-9pgj.onrender.com${item.url}`);
         });
 
-        card.appendChild(title);
         card.appendChild(img);
-        daftarMateri.appendChild(card);
+
+        const div = document.createElement("div");
+        div.className = "materi-card";
+        div.innerHTML = `
+    <h3>${escapeHtml(item.title)}</h3>
+    ${mediaPreview}
+  `;
+
+        daftarMateri.appendChild(div);
       });
     } catch (err) {
       console.error("Gagal memuat materi:", err);
