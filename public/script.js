@@ -552,43 +552,33 @@ const typeSelect = document.getElementById("type");
 const overlayType = document.getElementById("overlayType");
 const overlayFile = document.getElementById("overlayFile");
 
-// hanya tampil jika type = image
-typeSelect.addEventListener("change", () => {
-  if (typeSelect.value === "image") {
-    overlayType.style.display = "block";
-  } else {
-    overlayType.value = "";
-    overlayType.style.display = "none";
-    overlayFile.style.display = "none";
-  }
-});
+if (typeSelect && overlayType && overlayFile) {
+  // hanya tampil jika type = image
+  typeSelect.addEventListener("change", () => {
+    if (typeSelect.value === "image") {
+      overlayType.style.display = "block";
+    } else {
+      overlayType.value = "";
+      overlayType.style.display = "none";
+      overlayFile.style.display = "none";
+    }
+  });
 
-// tampilkan file jika overlay dipilih
-overlayType.addEventListener("change", () => {
-  if (overlayType.value) {
-    overlayFile.style.display = "block";
-    overlayFile.accept = overlayType.value === "audio" ? "audio/*" : "video/*";
-  } else {
-    overlayFile.style.display = "none";
-  }
-});
-
-function openOverlay(type, url) {
-  const modal = document.getElementById("mediaModal");
-  const body = document.getElementById("modalBody");
-
-  if (type === "video") {
-    body.innerHTML = `<video width="100%" controls autoplay src="${url}"></video>`;
-  }
-
-  if (type === "audio") {
-    body.innerHTML = `<audio controls autoplay src="${url}"></audio>`;
-  }
-
-  modal.style.display = "flex";
+  // tampilkan file jika overlay dipilih
+  overlayType.addEventListener("change", () => {
+    if (overlayType.value) {
+      overlayFile.style.display = "block";
+      overlayFile.accept =
+        overlayType.value === "audio" ? "audio/*" : "video/*";
+    } else {
+      overlayFile.style.display = "none";
+    }
+  });
 }
-
-document.getElementById("closeModal").onclick = function () {
-  document.getElementById("mediaModal").style.display = "none";
-  document.getElementById("modalBody").innerHTML = "";
-};
+const closeBtn = document.getElementById("closeModal");
+if (closeBtn) {
+  closeBtn.onclick = function () {
+    document.getElementById("mediaModal").style.display = "none";
+    document.getElementById("modalBody").innerHTML = "";
+  };
+}
