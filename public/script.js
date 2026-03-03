@@ -360,7 +360,8 @@ document.addEventListener("DOMContentLoaded", () => {
         img.style.cursor = "pointer";
 
         img.addEventListener("click", () => {
-          openOverlay("image", img.src);
+          openOverlay();
+          //openOverlay("image", img.src);
         });
 
         card.appendChild(title);
@@ -596,6 +597,10 @@ function openOverlay(type, url) {
   if (!modal || !body) return;
 
   body.innerHTML = "";
+
+  // if (type === "image") {
+  //   body.innerHTML = `<img src="${url}" style="width:100%">`;
+  // }
 
   if (type === "video") {
     body.innerHTML = `
