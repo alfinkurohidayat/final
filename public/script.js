@@ -336,33 +336,36 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
 
       daftarMateri.innerHTML = "";
+
       if (!data || data.length === 0) {
         daftarMateri.innerHTML = "<p>Tidak ada materi tersedia.</p>";
         return;
       }
 
       data.forEach((item) => {
-        // ❌ JANGAN tampilkan selain image
         if (item.type !== "image") return;
 
-        const hasOverlay = item.overlayType && item.overlayUrl;
+        const card = document.createElement("div");
+        card.className = "materi-card";
 
-        const mediaPreview = `
-  <img 
-    src="https://final-9pgj.onrender.com${item.url}" 
-    style="width:100%; height:200px; object-fit:cover; border-radius:8px; cursor:pointer;"
-    ${hasOverlay ? `onclick="openOverlay('${item.overlayType}','https://final-9pgj.onrender.com${item.overlayUrl}')"` : ""}
-  />
-`;
+        const title = document.createElement("h3");
+        title.textContent = item.title;
 
-        const div = document.createElement("div");
-        div.className = "materi-card";
-        div.innerHTML = `
-    <h3>${escapeHtml(item.title)}</h3>
-    ${mediaPreview}
-  `;
+        const img = document.createElement("img");
+        img.src = `https://final-9pgj.onrender.com${item.url}`;
+        img.style.width = "100%";
+        img.style.height = "200px";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "8px";
+        img.style.cursor = "pointer";
 
-        daftarMateri.appendChild(div);
+        img.addEventListener("click", () => {
+          openOverlay("image", img.src);
+        });
+
+        card.appendChild(title);
+        card.appendChild(img);
+        daftarMateri.appendChild(card);
       });
     } catch (err) {
       console.error("Gagal memuat materi:", err);
