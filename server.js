@@ -278,3 +278,4 @@ app.delete("/api/media/:id", checkAuth, async (req, res) => {
 
 // ==============================
 app.listen(process.env.PORT || 5000, () => console.log("Server running..."));
+app.use(express.static("public"));
