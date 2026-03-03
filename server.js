@@ -153,44 +153,47 @@ const upload = multer({ storage });
 // LOGIN (FULL FIX)
 // ==============================
 
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-
-  if (
-    username === process.env.ADMIN_USER &&
-    password === process.env.ADMIN_PASS
-  ) {
-    req.session.regenerate((err) => {
-      if (err) {
-        console.error("Session regenerate error:", err);
-
-        return res.status(500).json({
+app.post(
+  "/api/media",
+  checkAuth,
+  upload.fields([
+    { name: "mediaFile", maxCount: 1 },
+    { name: "overlayFile", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      if (!req.files || !req.files.mediaFile) {
+        return res.status(400).json({
           success: false,
-          message: "Session error",
+          message: "File utama tidak ada",
         });
       }
 
-      req.session.isAdmin = true;
+      const mediaFile = req.files.mediaFile[0];
+      const overlayFile = req.files.overlayFile
+        ? req.files.overlayFile[0]
+        : null;
 
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-        }
-
-        return res.json({
-          success: true,
-          message: "Login berhasil",
-        });
+      const media = await Media.create({
+        title: req.body.title,
+        type: req.body.type,
+        kelas: req.body.kelas,
+        submateri: req.body.submateri,
+        url: "/uploads/" + mediaFile.filename,
+        overlayType: req.body.overlayType || "",
+        overlayUrl: overlayFile ? "/uploads/" + overlayFile.filename : "",
       });
-    });
-  } else {
-    res.status(401).json({
-      success: false,
-      message: "Username atau password salah",
-    });
-  }
-});
 
+      res.json({
+        success: true,
+        data: media,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false });
+    }
+  },
+);
 // ==============================
 // CHECK LOGIN
 // ==============================
