@@ -435,9 +435,9 @@ async function startServer() {
   }
 }
 
-// //
-// //
-// // startServer();
+startServer();
+//
+//
 
 // import express from "express";
 // import mongoose from "mongoose";
