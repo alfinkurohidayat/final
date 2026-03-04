@@ -8,6 +8,8 @@ import fs from "fs";
 import path from "path";
 import cors from "cors";
 import { fileURLToPath } from "url";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 
 dotenv.config();
 
@@ -151,22 +153,66 @@ function checkAuth(req, res, next) {
 // UPLOAD CONFIG
 // ==============================
 
-const uploadDir = path.join(__dirname, "uploads");
+// ==============================
+// UPLOAD CONFIG (AUTO SWITCH)
+// ==============================
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+let upload;
+
+if (process.env.STORAGE_MODE === "cloudinary") {
+  console.log("☁️ Running in CLOUDINARY MODE");
+
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
+  const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+      folder: "elearning",
+      resource_type: "auto",
+    },
+  });
+
+  upload = multer({ storage });
+} else {
+  console.log("📁 Running in LOCAL MODE");
+
+  const uploadDir = path.join(__dirname, "uploads");
+
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => {
+      const clean = file.originalname.replace(/\s+/g, "_");
+      cb(null, Date.now() + "-" + clean);
+    },
+  });
+
+  upload = multer({ storage });
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
+// const uploadDir = path.join(__dirname, "uploads");
 
-  filename: (req, file, cb) => {
-    const clean = file.originalname.replace(/\s+/g, "_");
-    cb(null, Date.now() + "-" + clean);
-  },
-});
+// if (!fs.existsSync(uploadDir)) {
+//   fs.mkdirSync(uploadDir, { recursive: true });
+// }
 
-const upload = multer({ storage });
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => cb(null, uploadDir),
+
+//   filename: (req, file, cb) => {
+//     const clean = file.originalname.replace(/\s+/g, "_");
+//     cb(null, Date.now() + "-" + clean);
+//   },
+// });
+
+// const upload = multer({ storage });
 
 // ==============================
 // LOGIN (FULL FIX)
@@ -301,11 +347,22 @@ app.post(
         type: req.body.type,
         kelas: req.body.kelas,
         submateri: req.body.submateri,
-        url: "/uploads/" + mainFile.filename,
+        // url: "/uploads/" + mainFile.filename,
 
-        // 🔥 SIMPAN OVERLAY
-        overlayType: overlayFile ? req.body.overlayType : null,
-        overlayUrl: overlayFile ? "/uploads/" + overlayFile.filename : null,
+        // // 🔥 SIMPAN OVERLAY
+        // overlayType: overlayFile ? req.body.overlayType : null,
+        // overlayUrl: overlayFile ? "/uploads/" + overlayFile.filename : null,
+
+        url:
+          process.env.STORAGE_MODE === "cloudinary"
+            ? mainFile.path
+            : "/uploads/" + mainFile.filename,
+
+        overlayUrl: overlayFile
+          ? process.env.STORAGE_MODE === "cloudinary"
+            ? overlayFile.path
+            : "/uploads/" + overlayFile.filename
+          : null,
       });
 
       res.json({
