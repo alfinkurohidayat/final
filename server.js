@@ -98,6 +98,17 @@ app.use(
 // SCHEMA
 // ==============================
 
+// const mediaSchema = new mongoose.Schema(
+//   {
+//     title: String,
+//     type: String,
+//     url: String,
+//     kelas: String,
+//     submateri: String,
+//   },
+//   { timestamps: true },
+// );
+
 const mediaSchema = new mongoose.Schema(
   {
     title: String,
@@ -105,6 +116,16 @@ const mediaSchema = new mongoose.Schema(
     url: String,
     kelas: String,
     submateri: String,
+
+    // 🔥 TAMBAHAN
+    overlayType: {
+      type: String,
+      default: null,
+    },
+    overlayUrl: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true },
 );
@@ -150,7 +171,7 @@ const upload = multer({ storage });
 // ==============================
 // LOGIN (FULL FIX)
 // ==============================
-
+upload.single("mediaFile");
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
@@ -259,21 +280,32 @@ app.get("/api/media/:kelas/:submateri", async (req, res) => {
 app.post(
   "/api/media",
   checkAuth,
-  upload.single("mediaFile"),
+  upload.fields([
+    { name: "mediaFile", maxCount: 1 },
+    { name: "overlayFile", maxCount: 1 },
+  ]),
   async (req, res) => {
     try {
-      if (!req.file)
+      if (!req.files?.mediaFile) {
         return res.status(400).json({
           success: false,
           message: "File tidak ada",
         });
+      }
+
+      const mainFile = req.files.mediaFile[0];
+      const overlayFile = req.files.overlayFile?.[0];
 
       const media = await Media.create({
         title: req.body.title,
         type: req.body.type,
         kelas: req.body.kelas,
         submateri: req.body.submateri,
-        url: "/uploads/" + req.file.filename,
+        url: "/uploads/" + mainFile.filename,
+
+        // 🔥 SIMPAN OVERLAY
+        overlayType: overlayFile ? req.body.overlayType : null,
+        overlayUrl: overlayFile ? "/uploads/" + overlayFile.filename : null,
       });
 
       res.json({
@@ -282,10 +314,7 @@ app.post(
       });
     } catch (err) {
       console.error(err);
-
-      res.status(500).json({
-        success: false,
-      });
+      res.status(500).json({ success: false });
     }
   },
 );

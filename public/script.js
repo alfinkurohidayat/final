@@ -121,12 +121,25 @@ if (addBtnGlobal) {
         return;
       }
 
+      // const fd = new FormData();
+      // fd.append("title", title);
+      // fd.append("type", type);
+      // fd.append("kelas", classLevel);
+      // fd.append("submateri", category);
+      // fd.append("mediaFile", fileInput.files[0]);
+
       const fd = new FormData();
       fd.append("title", title);
       fd.append("type", type);
       fd.append("kelas", classLevel);
       fd.append("submateri", category);
       fd.append("mediaFile", fileInput.files[0]);
+
+      // 🔥 TAMBAHKAN INI
+      fd.append("overlayType", overlayType.value);
+      if (overlayFile.files.length > 0) {
+        fd.append("overlayFile", overlayFile.files[0]);
+      }
 
       try {
         const res = await fetch("https://final-9pgj.onrender.com/api/media", {
@@ -360,9 +373,21 @@ document.addEventListener("DOMContentLoaded", () => {
         img.style.cursor = "pointer";
 
         img.addEventListener("click", () => {
-          openOverlay("image", img.src);
-          //openOverlay("image", img.src);
+          if (!item.overlayType || !item.overlayUrl) {
+            console.log("Tidak ada overlay untuk item ini");
+            return;
+          }
+
+          openOverlay(
+            item.overlayType,
+            `https://final-9pgj.onrender.com${item.overlayUrl}`,
+          );
         });
+
+        // img.addEventListener("click", () => {
+        //   openOverlay("image", img.src);
+        //   //openOverlay("image", img.src);
+        // });
 
         card.appendChild(title);
         card.appendChild(img);
