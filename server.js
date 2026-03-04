@@ -347,16 +347,14 @@ app.post(
         type: req.body.type,
         kelas: req.body.kelas,
         submateri: req.body.submateri,
-        // url: "/uploads/" + mainFile.filename,
-
-        // // 🔥 SIMPAN OVERLAY
-        // overlayType: overlayFile ? req.body.overlayType : null,
-        // overlayUrl: overlayFile ? "/uploads/" + overlayFile.filename : null,
 
         url:
           process.env.STORAGE_MODE === "cloudinary"
             ? mainFile.path
             : "/uploads/" + mainFile.filename,
+
+        // 🔥 TAMBAHKAN INI
+        overlayType: overlayFile ? req.body.overlayType : null,
 
         overlayUrl: overlayFile
           ? process.env.STORAGE_MODE === "cloudinary"
@@ -383,29 +381,40 @@ app.post(
 app.put(
   "/api/media/:id",
   checkAuth,
-  upload.single("mediaFile"),
+  upload.fields([
+    { name: "mediaFile", maxCount: 1 },
+    { name: "overlayFile", maxCount: 1 },
+  ]),
   async (req, res) => {
     try {
       const media = await Media.findById(req.params.id);
-
-      if (!media)
-        return res.status(404).json({
-          success: false,
-        });
+      if (!media) {
+        return res.status(404).json({ success: false });
+      }
 
       media.title = req.body.title;
       media.type = req.body.type;
       media.kelas = req.body.kelas;
       media.submateri = req.body.submateri;
 
-      if (req.file) {
-        if (media.url) {
-          const oldFile = path.join(__dirname, media.url);
+      const mainFile = req.files?.mediaFile?.[0];
+      const overlayFile = req.files?.overlayFile?.[0];
 
-          if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
-        }
+      // UPDATE FILE UTAMA
+      if (mainFile) {
+        media.url =
+          process.env.STORAGE_MODE === "cloudinary"
+            ? mainFile.path
+            : "/uploads/" + mainFile.filename;
+      }
 
-        media.url = "/uploads/" + req.file.filename;
+      // UPDATE OVERLAY
+      if (overlayFile) {
+        media.overlayType = req.body.overlayType;
+        media.overlayUrl =
+          process.env.STORAGE_MODE === "cloudinary"
+            ? overlayFile.path
+            : "/uploads/" + overlayFile.filename;
       }
 
       await media.save();
@@ -414,10 +423,9 @@ app.put(
         success: true,
         data: media,
       });
-    } catch {
-      res.status(500).json({
-        success: false,
-      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false });
     }
   },
 );
