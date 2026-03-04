@@ -8,8 +8,6 @@ import fs from "fs";
 import path from "path";
 import cors from "cors";
 import { fileURLToPath } from "url";
-import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
 
 dotenv.config();
 
@@ -153,66 +151,22 @@ function checkAuth(req, res, next) {
 // UPLOAD CONFIG
 // ==============================
 
-// ==============================
-// UPLOAD CONFIG (AUTO SWITCH)
-// ==============================
+const uploadDir = path.join(__dirname, "uploads");
 
-let upload;
-
-if (process.env.STORAGE_MODE === "cloudinary") {
-  console.log("☁️ Running in CLOUDINARY MODE");
-
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
-
-  const storage = new CloudinaryStorage({
-    cloudinary,
-    params: {
-      folder: "elearning",
-      resource_type: "auto",
-    },
-  });
-
-  upload = multer({ storage });
-} else {
-  console.log("📁 Running in LOCAL MODE");
-
-  const uploadDir = path.join(__dirname, "uploads");
-
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadDir),
-    filename: (req, file, cb) => {
-      const clean = file.originalname.replace(/\s+/g, "_");
-      cb(null, Date.now() + "-" + clean);
-    },
-  });
-
-  upload = multer({ storage });
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// const uploadDir = path.join(__dirname, "uploads");
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
 
-// if (!fs.existsSync(uploadDir)) {
-//   fs.mkdirSync(uploadDir, { recursive: true });
-// }
+  filename: (req, file, cb) => {
+    const clean = file.originalname.replace(/\s+/g, "_");
+    cb(null, Date.now() + "-" + clean);
+  },
+});
 
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => cb(null, uploadDir),
-
-//   filename: (req, file, cb) => {
-//     const clean = file.originalname.replace(/\s+/g, "_");
-//     cb(null, Date.now() + "-" + clean);
-//   },
-// });
-
-// const upload = multer({ storage });
+const upload = multer({ storage });
 
 // ==============================
 // LOGIN (FULL FIX)
@@ -347,20 +301,11 @@ app.post(
         type: req.body.type,
         kelas: req.body.kelas,
         submateri: req.body.submateri,
+        url: "/uploads/" + mainFile.filename,
 
-        url:
-          process.env.STORAGE_MODE === "cloudinary"
-            ? mainFile.path
-            : "/uploads/" + mainFile.filename,
-
-        // 🔥 TAMBAHKAN INI
+        // 🔥 SIMPAN OVERLAY
         overlayType: overlayFile ? req.body.overlayType : null,
-
-        overlayUrl: overlayFile
-          ? process.env.STORAGE_MODE === "cloudinary"
-            ? overlayFile.path
-            : "/uploads/" + overlayFile.filename
-          : null,
+        overlayUrl: overlayFile ? "/uploads/" + overlayFile.filename : null,
       });
 
       res.json({
@@ -381,40 +326,29 @@ app.post(
 app.put(
   "/api/media/:id",
   checkAuth,
-  upload.fields([
-    { name: "mediaFile", maxCount: 1 },
-    { name: "overlayFile", maxCount: 1 },
-  ]),
+  upload.single("mediaFile"),
   async (req, res) => {
     try {
       const media = await Media.findById(req.params.id);
-      if (!media) {
-        return res.status(404).json({ success: false });
-      }
+
+      if (!media)
+        return res.status(404).json({
+          success: false,
+        });
 
       media.title = req.body.title;
       media.type = req.body.type;
       media.kelas = req.body.kelas;
       media.submateri = req.body.submateri;
 
-      const mainFile = req.files?.mediaFile?.[0];
-      const overlayFile = req.files?.overlayFile?.[0];
+      if (req.file) {
+        if (media.url) {
+          const oldFile = path.join(__dirname, media.url);
 
-      // UPDATE FILE UTAMA
-      if (mainFile) {
-        media.url =
-          process.env.STORAGE_MODE === "cloudinary"
-            ? mainFile.path
-            : "/uploads/" + mainFile.filename;
-      }
+          if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
+        }
 
-      // UPDATE OVERLAY
-      if (overlayFile) {
-        media.overlayType = req.body.overlayType;
-        media.overlayUrl =
-          process.env.STORAGE_MODE === "cloudinary"
-            ? overlayFile.path
-            : "/uploads/" + overlayFile.filename;
+        media.url = "/uploads/" + req.file.filename;
       }
 
       await media.save();
@@ -423,9 +357,10 @@ app.put(
         success: true,
         data: media,
       });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ success: false });
+    } catch {
+      res.status(500).json({
+        success: false,
+      });
     }
   },
 );
