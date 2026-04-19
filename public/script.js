@@ -517,7 +517,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const questionBuilder = document.getElementById("questionBuilder");
 
   if (isQuestionEl && questionTypeEl && questionBuilder) {
-    isQuestionEl.addEventListener("change", () => {
+    function toggleQuestionUI() {
       if (isQuestionEl.checked) {
         questionTypeEl.style.display = "block";
         renderQuestionBuilder();
@@ -525,14 +525,22 @@ document.addEventListener("DOMContentLoaded", () => {
         questionTypeEl.style.display = "none";
         questionBuilder.innerHTML = "";
       }
-    });
+    }
 
+    // 🔥 FIX 1: trigger saat checkbox berubah
+    isQuestionEl.addEventListener("change", toggleQuestionUI);
+
+    // 🔥 FIX 2: trigger saat type berubah
     questionTypeEl.addEventListener("change", renderQuestionBuilder);
+
+    // 🔥 FIX 3: trigger saat pertama kali load
+    toggleQuestionUI();
 
     function renderQuestionBuilder() {
       const type = questionTypeEl.value;
+
       questionBuilder.innerHTML = `
-      <button id="addQuestion">Tambah Soal</button>
+      <button type="button" id="addQuestion">Tambah Soal</button>
       <div id="questionList"></div>
     `;
 
@@ -544,16 +552,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (type === "truefalse") {
           div.innerHTML = `
-            <input type="text" placeholder="Pertanyaan">
-            <select>
-              <option value="true">True</option>
-              <option value="false">False</option>
-            </select>
-          `;
+          <input type="text" placeholder="Pertanyaan">
+          <select>
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+        `;
         } else {
           div.innerHTML = `
-            <input type="text" placeholder="Pertanyaan Essay">
-          `;
+          <input type="text" placeholder="Pertanyaan Essay">
+        `;
         }
 
         qList.appendChild(div);
