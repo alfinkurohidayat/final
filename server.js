@@ -445,10 +445,9 @@ import session from "express-session";
 import MongoStore from "connect-mongo";
 import dotenv from "dotenv";
 import multer from "multer";
-import fs from "fs";
-import path from "path";
 import cors from "cors";
 import { fileURLToPath } from "url";
+import { put, deleteBlob } from "@vercel/blob";
 
 dotenv.config();
 
@@ -487,7 +486,6 @@ app.use(express.urlencoded({ extended: true }));
 // STATIC
 // ==============================
 app.use(express.static(path.join(__dirname, "public")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ==============================
 // CONNECT MONGODB
@@ -550,22 +548,14 @@ function checkAuth(req, res, next) {
 // ==============================
 // UPLOAD CONFIG
 // ==============================
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const clean = file.originalname.replace(/\s+/g, "_");
-    cb(null, Date.now() + "-" + clean);
-  },
-});
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // ==============================
 // LOGIN
 // ==============================
-app.post("/login", upload.single("mediaFile"), (req, res) => {
+app.post("/login", (req, res) => {
   const { username, password } = req.body;
   if (
     username === process.env.ADMIN_USER &&
@@ -651,16 +641,31 @@ app.post(
           .json({ success: false, message: "File tidak ada" });
 
       const mainFile = req.files.mediaFile[0];
-      const overlayFile = req.files.overlayFile?.[0];
+      const cleanName = mainFile.originalname.replace(/\s+/g, "_");
+      const mainBlob = await put(
+        `${Date.now()}-${cleanName}`,
+        mainFile.buffer,
+        { access: "public_read" },
+      );
+      let overlayUrl = null;
+      if (overlayFile) {
+        const overlayClean = overlayFile.originalname.replace(/\s+/g, "_");
+        const overlayBlob = await put(
+          `${Date.now()}-${overlayClean}`,
+          overlayFile.buffer,
+          { access: "public_read" },
+        );
+        overlayUrl = overlayBlob.url;
+      }
 
       const media = await Media.create({
         title: req.body.title,
         type: req.body.type,
         kelas: req.body.kelas,
         submateri: req.body.submateri,
-        url: "/uploads/" + mainFile.filename,
+        url: mainBlob.url,
         overlayType: overlayFile ? req.body.overlayType : null,
-        overlayUrl: overlayFile ? "/uploads/" + overlayFile.filename : null,
+        overlayUrl,
       });
 
       res.json({ success: true, data: media });
@@ -687,10 +692,15 @@ app.put(
 
       if (req.file) {
         if (media.url) {
-          const oldFile = path.join(__dirname, media.url);
-          if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
+          await deleteBlob(media.url);
         }
-        media.url = "/uploads/" + req.file.filename;
+        const cleanName = req.file.originalname.replace(/\s+/g, "_");
+        const newBlob = await put(
+          `${Date.now()}-${cleanName}`,
+          req.file.buffer,
+          { access: "public_read" },
+        );
+        media.url = newBlob.url;
       }
 
       await media.save();
@@ -707,8 +717,10 @@ app.delete("/api/media/:id", checkAuth, async (req, res) => {
     if (!media) return res.status(404).json({ success: false });
 
     if (media.url) {
-      const filePath = path.join(__dirname, media.url);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      await deleteBlob(media.url);
+    }
+    if (media.overlayUrl) {
+      await deleteBlob(media.overlayUrl);
     }
 
     await media.deleteOne();
