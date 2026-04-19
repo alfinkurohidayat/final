@@ -383,122 +383,128 @@ function appendQuestionToForm(fd) {
 
   const items = [];
 
- // ==============================
-// 🔐 LOGIN & DASHBOARD ADMIN
-// ==============================
-document.addEventListener("DOMContentLoaded", async () => {
-  const loginSection = document.getElementById("login-section");
-  const adminSection = document.getElementById("admin-section");
-  const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
+  // ==============================
+  // 🔐 LOGIN & DASHBOARD ADMIN
+  // ==============================
+  document.addEventListener("DOMContentLoaded", async () => {
+    const loginSection = document.getElementById("login-section");
+    const adminSection = document.getElementById("admin-section");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-  // cek login
-  try {
-    const res = await fetch("https://final-9pgj.onrender.com/check-login", {
-      credentials: "include",
-    });
-    const data = await res.json();
-    if (data.loggedIn) {
-      if (loginSection && adminSection) {
-        loginSection.style.display = "none";
-        adminSection.style.display = "block";
-        if (logoutBtn) logoutBtn.style.display = "inline-block";
-        await loadMediaList(); // tampilkan daftar media di admin
-      }
-    }
-  } catch (err) {
-    console.error("Gagal cek status login:", err);
-  }
-
-  // login handler
-  if (loginBtn) {
-    loginBtn.addEventListener("click", async () => {
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const msg = document.getElementById("login-msg");
-
-      if (!username || !password) {
-        msg.textContent = "Isi username dan password!";
-        msg.style.color = "red";
-        return;
-      }
-
-      try {
-        const res = await fetch("https://final-9pgj.onrender.com/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (data.success) {
-          msg.textContent = "Login berhasil!";
-          msg.style.color = "green";
-          // tampilkan panel admin
+    // cek login
+    try {
+      const res = await fetch("https://final-9pgj.onrender.com/check-login", {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.loggedIn) {
+        if (loginSection && adminSection) {
           loginSection.style.display = "none";
           adminSection.style.display = "block";
           if (logoutBtn) logoutBtn.style.display = "inline-block";
-          await loadMediaList();
-        } else {
-          msg.textContent = data.message || "Login gagal";
+          await loadMediaList(); // tampilkan daftar media di admin
+        }
+      }
+    } catch (err) {
+      console.error("Gagal cek status login:", err);
+    }
+
+    // login handler
+    if (loginBtn) {
+      loginBtn.addEventListener("click", async () => {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const msg = document.getElementById("login-msg");
+
+        if (!username || !password) {
+          msg.textContent = "Isi username dan password!";
+          msg.style.color = "red";
+          return;
+        }
+
+        try {
+          const res = await fetch("https://final-9pgj.onrender.com/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+            credentials: "include",
+          });
+          const data = await res.json();
+          if (data.success) {
+            msg.textContent = "Login berhasil!";
+            msg.style.color = "green";
+            // tampilkan panel admin
+            loginSection.style.display = "none";
+            adminSection.style.display = "block";
+            if (logoutBtn) logoutBtn.style.display = "inline-block";
+            await loadMediaList();
+          } else {
+            msg.textContent = data.message || "Login gagal";
+            msg.style.color = "red";
+          }
+        } catch (err) {
+          console.error("Error login:", err);
+          msg.textContent = "Terjadi error saat login";
           msg.style.color = "red";
         }
-      } catch (err) {
-        console.error("Error login:", err);
-        msg.textContent = "Terjadi error saat login";
-        msg.style.color = "red";
-      }
-    });
-  }
+      });
+    }
 
-  // logout handler (global link di header)
-  const adminLink = document.querySelector('a[href="admin.html"]');
-  if (adminLink) {
-    adminLink.addEventListener("click", async (e) => {
-      if (logoutBtn && logoutBtn.style.display !== "none") {
-        e.preventDefault();
+    // logout handler (global link di header)
+    const adminLink = document.querySelector('a[href="admin.html"]');
+    if (adminLink) {
+      adminLink.addEventListener("click", async (e) => {
+        if (logoutBtn && logoutBtn.style.display !== "none") {
+          e.preventDefault();
+          await fetch("https://final-9pgj.onrender.com/logout", {
+            method: "POST",
+            credentials: "include",
+          });
+          localStorage.clear(); // hapus semua state
+          window.location.reload();
+        }
+      });
+    }
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
         await fetch("https://final-9pgj.onrender.com/logout", {
           method: "POST",
           credentials: "include",
         });
-        localStorage.clear(); // hapus semua state
+        localStorage.clear();
         window.location.reload();
-      }
-    });
-  }
-
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await fetch("https://final-9pgj.onrender.com/logout", {
-        method: "POST",
-        credentials: "include",
       });
-      localStorage.clear();
-      window.location.reload();
-    });
-  }
+    }
 
-  // ===== Restore Admin Form State jika ada =====
-  const editIdEl = document.getElementById("editId");
-  const titleEl = document.getElementById("title");
-  const typeEl = document.getElementById("type");
-  const classLevelEl = document.getElementById("classLevel");
-  const categoryEl = document.getElementById("category");
-  const overlayTypeEl = document.getElementById("overlayType");
+    // ===== Restore Admin Form State jika ada =====
+    const editIdEl = document.getElementById("editId");
+    const titleEl = document.getElementById("title");
+    const typeEl = document.getElementById("type");
+    const classLevelEl = document.getElementById("classLevel");
+    const categoryEl = document.getElementById("category");
+    const overlayTypeEl = document.getElementById("overlayType");
 
-  if (editIdEl) editIdEl.value = localStorage.getItem("admin_editId") || "";
-  if (titleEl) titleEl.value = localStorage.getItem("admin_title") || "";
-  if (typeEl) typeEl.value = localStorage.getItem("admin_type") || "";
-  if (classLevelEl)
-    classLevelEl.value = localStorage.getItem("admin_classLevel") || "";
-  if (categoryEl)
-    categoryEl.value = localStorage.getItem("admin_category") || "";
-  if (overlayTypeEl)
-    overlayTypeEl.value = localStorage.getItem("admin_overlayType") || "";
+    if (editIdEl) editIdEl.value = localStorage.getItem("admin_editId") || "";
+    if (titleEl) titleEl.value = localStorage.getItem("admin_title") || "";
+    if (typeEl) typeEl.value = localStorage.getItem("admin_type") || "";
+    if (classLevelEl)
+      classLevelEl.value = localStorage.getItem("admin_classLevel") || "";
+    if (categoryEl)
+      categoryEl.value = localStorage.getItem("admin_category") || "";
+    if (overlayTypeEl)
+      overlayTypeEl.value = localStorage.getItem("admin_overlayType") || "";
 
-  // Simpan form admin ke localStorage saat berubah
-  [titleEl, typeEl, classLevelEl, categoryEl, overlayTypeEl, editIdEl].forEach(
-    (el) => {
+    // Simpan form admin ke localStorage saat berubah
+    [
+      titleEl,
+      typeEl,
+      classLevelEl,
+      categoryEl,
+      overlayTypeEl,
+      editIdEl,
+    ].forEach((el) => {
       if (!el) return;
       el.addEventListener("input", () => {
         if (titleEl) localStorage.setItem("admin_title", titleEl.value);
@@ -511,175 +517,174 @@ document.addEventListener("DOMContentLoaded", async () => {
           localStorage.setItem("admin_overlayType", overlayTypeEl.value);
         if (editIdEl) localStorage.setItem("admin_editId", editIdEl.value);
       });
-    },
-  );
-});
+    });
+  });
 
-// ==============================
-// 🎬 CRUD MEDIA ADMIN (Tambah / Update / Delete)
-// ==============================
-const addBtnGlobal = document.getElementById("addBtn");
-if (addBtnGlobal) {
-  addBtnGlobal.addEventListener("click", async (e) => {
-    const editId = document.getElementById("editId")?.value || "";
-    const title = document.getElementById("title").value.trim();
-    const type = document.getElementById("type").value;
-    const classLevel = document.getElementById("classLevel").value;
-    const category = document.getElementById("category").value;
-    const fileInput = document.getElementById("mediaFile");
+  // ==============================
+  // 🎬 CRUD MEDIA ADMIN (Tambah / Update / Delete)
+  // ==============================
+  const addBtnGlobal = document.getElementById("addBtn");
+  if (addBtnGlobal) {
+    addBtnGlobal.addEventListener("click", async (e) => {
+      const editId = document.getElementById("editId")?.value || "";
+      const title = document.getElementById("title").value.trim();
+      const type = document.getElementById("type").value;
+      const classLevel = document.getElementById("classLevel").value;
+      const category = document.getElementById("category").value;
+      const fileInput = document.getElementById("mediaFile");
 
-    if (!title || !type || !classLevel || !category) {
-      alert("Lengkapi semua kolom (judul, tipe, kelas, kategori)!");
-      return;
-    }
-
-    // === 🟢 TAMBAH BARU (POST) ===
-    if (!editId) {
-      if (!fileInput || fileInput.files.length === 0) {
-        alert("Pilih file media (video/audio) sebelum menambah.");
+      if (!title || !type || !classLevel || !category) {
+        alert("Lengkapi semua kolom (judul, tipe, kelas, kategori)!");
         return;
       }
 
-      const fd = new FormData();
-      fd.append("title", title);
-      fd.append("type", type);
-      fd.append("kelas", classLevel);
-      fd.append("submateri", category);
-      fd.append("mediaFile", fileInput.files[0]);
-
-      fd.append("overlayType", overlayType.value);
-
-      if (overlayFile.files.length > 0) {
-        fd.append("overlayFile", overlayFile.files[0]);
-      }
-
-      // ✅ TAMBAHKAN INI
-      appendQuestionToForm(fd);
-
-      try {
-        const res = await fetch("https://final-9pgj.onrender.com/api/media", {
-          method: "POST",
-          body: fd,
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert("Media berhasil ditambahkan!");
-          resetAdminForm();
-          await loadMediaList();
-        } else {
-          alert("Gagal menambah media: " + (data.message || "Unknown"));
+      // === 🟢 TAMBAH BARU (POST) ===
+      if (!editId) {
+        if (!fileInput || fileInput.files.length === 0) {
+          alert("Pilih file media (video/audio) sebelum menambah.");
+          return;
         }
-      } catch (err) {
-        console.error("Gagal POST media:", err);
-        alert("Terjadi kesalahan saat menambah media.");
-      }
 
-      // === 🟢 UPDATE FILE DARI DEVICE (versi baru) ===
-    } else {
-      const fd =
-        fileInput && fileInput.files.length > 0 ? new FormData() : null;
-      if (fd) {
+        const fd = new FormData();
         fd.append("title", title);
         fd.append("type", type);
         fd.append("kelas", classLevel);
         fd.append("submateri", category);
         fd.append("mediaFile", fileInput.files[0]);
 
-        try {
-          const res = await fetch(
-            `https://final-9pgj.onrender.com/api/media/${editId}`,
-            {
-              method: "PUT",
-              body: fd,
-              credentials: "include",
-            },
-          );
-          const data = await res.json();
-          if (res.ok && data.success) {
-            alert("Media dan file berhasil diperbarui!");
-            resetAdminForm();
-            await loadMediaList();
-          } else {
-            alert("Gagal update file: " + (data.message || "Unknown"));
-          }
-        } catch (err) {
-          console.error("Gagal PUT media:", err);
-          alert("Terjadi kesalahan saat memperbarui file.");
+        fd.append("overlayType", overlayType.value);
+
+        if (overlayFile.files.length > 0) {
+          fd.append("overlayFile", overlayFile.files[0]);
         }
-      } else {
+
+        // ✅ TAMBAHKAN INI
+        appendQuestionToForm(fd);
+
         try {
-          const payload = {
-            title,
-            type,
-            kelas: classLevel,
-            submateri: category,
-          };
-          const res = await fetch(
-            `https://final-9pgj.onrender.com/api/media/${editId}`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-              credentials: "include",
-            },
-          );
+          const res = await fetch("https://final-9pgj.onrender.com/api/media", {
+            method: "POST",
+            body: fd,
+            credentials: "include",
+          });
           const data = await res.json();
           if (res.ok && data.success) {
-            alert("Data media berhasil diperbarui!");
+            alert("Media berhasil ditambahkan!");
             resetAdminForm();
             await loadMediaList();
           } else {
-            alert("Gagal update data: " + (data.message || "Unknown"));
+            alert("Gagal menambah media: " + (data.message || "Unknown"));
           }
         } catch (err) {
-          console.error("Gagal PUT media:", err);
-          alert("Terjadi kesalahan saat memperbarui data.");
+          console.error("Gagal POST media:", err);
+          alert("Terjadi kesalahan saat menambah media.");
+        }
+
+        // === 🟢 UPDATE FILE DARI DEVICE (versi baru) ===
+      } else {
+        const fd =
+          fileInput && fileInput.files.length > 0 ? new FormData() : null;
+        if (fd) {
+          fd.append("title", title);
+          fd.append("type", type);
+          fd.append("kelas", classLevel);
+          fd.append("submateri", category);
+          fd.append("mediaFile", fileInput.files[0]);
+
+          try {
+            const res = await fetch(
+              `https://final-9pgj.onrender.com/api/media/${editId}`,
+              {
+                method: "PUT",
+                body: fd,
+                credentials: "include",
+              },
+            );
+            const data = await res.json();
+            if (res.ok && data.success) {
+              alert("Media dan file berhasil diperbarui!");
+              resetAdminForm();
+              await loadMediaList();
+            } else {
+              alert("Gagal update file: " + (data.message || "Unknown"));
+            }
+          } catch (err) {
+            console.error("Gagal PUT media:", err);
+            alert("Terjadi kesalahan saat memperbarui file.");
+          }
+        } else {
+          try {
+            const payload = {
+              title,
+              type,
+              kelas: classLevel,
+              submateri: category,
+            };
+            const res = await fetch(
+              `https://final-9pgj.onrender.com/api/media/${editId}`,
+              {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+                credentials: "include",
+              },
+            );
+            const data = await res.json();
+            if (res.ok && data.success) {
+              alert("Data media berhasil diperbarui!");
+              resetAdminForm();
+              await loadMediaList();
+            } else {
+              alert("Gagal update data: " + (data.message || "Unknown"));
+            }
+          } catch (err) {
+            console.error("Gagal PUT media:", err);
+            alert("Terjadi kesalahan saat memperbarui data.");
+          }
         }
       }
-    }
-  });
-}
-
-function resetAdminForm() {
-  const form = document.querySelector(".admin-form");
-  if (form) form.reset();
-  const editIdEl = document.getElementById("editId");
-  if (editIdEl) editIdEl.value = "";
-  if (addBtnGlobal) addBtnGlobal.textContent = "Tambah Media";
-
-  // Hapus localStorage admin form
-  localStorage.removeItem("admin_editId");
-  localStorage.removeItem("admin_title");
-  localStorage.removeItem("admin_type");
-  localStorage.removeItem("admin_classLevel");
-  localStorage.removeItem("admin_category");
-  localStorage.removeItem("admin_overlayType");
-}
-
-// ==============================
-// 🧾 Fungsi Load & Render Daftar Media (Admin table)
-// ==============================
-async function loadMediaList() {
-  const tbody = document.querySelector("#media-admin-list tbody");
-  if (!tbody) return;
-
-  try {
-    const res = await fetch("https://final-9pgj.onrender.com/api/media", {
-      credentials: "include",
     });
-    const media = await res.json();
+  }
 
-    tbody.innerHTML = "";
-    if (!media || media.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">Belum ada media</td></tr>`;
-      return;
-    }
+  function resetAdminForm() {
+    const form = document.querySelector(".admin-form");
+    if (form) form.reset();
+    const editIdEl = document.getElementById("editId");
+    if (editIdEl) editIdEl.value = "";
+    if (addBtnGlobal) addBtnGlobal.textContent = "Tambah Media";
 
-    media.forEach((item) => {
-      const tr = document.createElement("tr");
-      const urlDisplay = getFullUrl(item.url);
-      tr.innerHTML = `
+    // Hapus localStorage admin form
+    localStorage.removeItem("admin_editId");
+    localStorage.removeItem("admin_title");
+    localStorage.removeItem("admin_type");
+    localStorage.removeItem("admin_classLevel");
+    localStorage.removeItem("admin_category");
+    localStorage.removeItem("admin_overlayType");
+  }
+
+  // ==============================
+  // 🧾 Fungsi Load & Render Daftar Media (Admin table)
+  // ==============================
+  async function loadMediaList() {
+    const tbody = document.querySelector("#media-admin-list tbody");
+    if (!tbody) return;
+
+    try {
+      const res = await fetch("https://final-9pgj.onrender.com/api/media", {
+        credentials: "include",
+      });
+      const media = await res.json();
+
+      tbody.innerHTML = "";
+      if (!media || media.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">Belum ada media</td></tr>`;
+        return;
+      }
+
+      media.forEach((item) => {
+        const tr = document.createElement("tr");
+        const urlDisplay = getFullUrl(item.url);
+        tr.innerHTML = `
         <td>${escapeHtml(item.title)}</td>
         <td>${escapeHtml(item.type)}</td>
         <td>${escapeHtml(item.kelas || "-")}</td>
@@ -690,265 +695,265 @@ async function loadMediaList() {
           <button class="deleteBtn" data-id="${item._id}">Hapus</button>
         </td>
       `;
-      tbody.appendChild(tr);
-    });
-
-    tbody.querySelectorAll(".deleteBtn").forEach((b) => {
-      b.addEventListener("click", async (e) => {
-        const id = e.target.dataset.id;
-        if (!confirm("Yakin ingin menghapus media ini?")) return;
-        try {
-          const res = await fetch(
-            `https://final-9pgj.onrender.com/api/media/${id}`,
-            {
-              method: "DELETE",
-              credentials: "include",
-            },
-          );
-          const data = await res.json();
-          if (res.ok && data.success) {
-            alert("Media dihapus");
-            await loadMediaList();
-          } else {
-            alert("Gagal menghapus: " + (data.message || ""));
-          }
-        } catch (err) {
-          console.error("Gagal delete:", err);
-          alert("Terjadi kesalahan saat menghapus.");
-        }
+        tbody.appendChild(tr);
       });
-    });
 
-    tbody.querySelectorAll(".editBtn").forEach((b) => {
-      b.addEventListener("click", async (e) => {
-        const id = e.target.dataset.id;
-        const item = media.find((m) => m._id === id);
-        if (!item) return alert("Data tidak ditemukan untuk diedit.");
-
-        document.getElementById("editId").value = item._id;
-        document.getElementById("title").value = item.title || "";
-        document.getElementById("type").value = item.type || "";
-        document.getElementById("classLevel").value = item.kelas || "";
-        document.getElementById("category").value = item.submateri || "";
-        addBtnGlobal.textContent = "Update Media";
-
-        // simpan state ke localStorage agar tidak hilang saat idle/refresh
-        localStorage.setItem("admin_editId", item._id);
-        localStorage.setItem("admin_title", item.title || "");
-        localStorage.setItem("admin_type", item.type || "");
-        localStorage.setItem("admin_classLevel", item.kelas || "");
-        localStorage.setItem("admin_category", item.submateri || "");
-
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-    });
-  } catch (err) {
-    console.error("Gagal memuat daftar media:", err);
-  }
-}
-
-//helper jir
-function getFullUrl(url) {
-  if (!url) return "-";
-
-  // jika sudah full URL (http / https), pakai langsung
-  if (url.startsWith("http")) {
-    return url;
-  }
-
-  // jika masih relative path, tambahkan domain backend
-  return `https://final-9pgj.onrender.com${url}`;
-}
-
-function appendQuestionToForm(fd) {
-  const isQuestionEl = document.getElementById("isQuestion");
-  const questionTypeEl = document.getElementById("questionType");
-
-  if (!isQuestionEl || !isQuestionEl.checked) return true;
-
-  const items = [];
-
-  document.querySelectorAll(".question-item").forEach((el, index) => {
-  const inputs = el.querySelectorAll("input, select");
-
-  const question = inputs[0]?.value?.trim(); // soal
-  const answer = inputs[1]?.value?.trim();   // jawaban
-
-  items.push({ question, answer });
-}););
-
-  if (items.length === 0 || items.some((i) => !i.answer)) {
-    alert("Jawaban belum diisi!");
-    return false;
-  }
-
-  fd.append("isQuestion", "true");
-  fd.append("questionType", questionTypeEl.value);
-  fd.append("questionItems", JSON.stringify(items));
-
-  return true;
-}
-// ==============================
-// 🧭 NAVIGASI & TAMPILAN MATERI PADA HALAMAN INDEX
-// ==============================
-document.addEventListener("DOMContentLoaded", () => {
-  const menuItems = document.querySelectorAll(".menu-vertikal a");
-  const submenu = document.getElementById("submenu");
-  const submenuTitle = document.getElementById("submenu-title");
-  const submenuContent = document.getElementById("submenu-content");
-  const daftarMateri = document.getElementById("daftar-materi");
-  if (!daftarMateri) return;
-  const DM = document.getElementById("DM");
-
-  function ubahDM(teks) {
-    if (DM) DM.innerHTML = `<h3>${teks}</h3>`;
-  }
-
-  async function tampilkanMateri(kelas, submateri) {
-    localStorage.setItem("lastClass", kelas);
-    localStorage.setItem("lastSubmateri", submateri);
-    ubahDM(`Materi ${kelas} - ${submateri}`);
-
-    try {
-      const res = await fetch(
-        `https://final-9pgj.onrender.com/api/media/${encodeURIComponent(kelas)}/${encodeURIComponent(submateri)}`,
-        { credentials: "include" },
-      );
-      const data = await res.json();
-
-      daftarMateri.innerHTML = "";
-
-      if (!data || data.length === 0) {
-        daftarMateri.innerHTML = "<p>Tidak ada materi tersedia.</p>";
-        return;
-      }
-
-      data.forEach((item) => {
-        if (item.type !== "image") return;
-
-        const card = document.createElement("div");
-        card.className = "materi-card";
-
-        const title = document.createElement("h3");
-        title.textContent = item.title;
-
-        const img = document.createElement("img");
-        img.src = getFullUrl(item.url);
-        img.style.width = "100%";
-        img.style.height = "200px";
-        img.style.objectFit = "cover";
-        img.style.borderRadius = "8px";
-        img.style.cursor = "pointer";
-
-        img.addEventListener("click", () => {
-          if (!item.overlayType || !item.overlayUrl) {
-            console.log("Tidak ada overlay untuk item ini");
-            return;
+      tbody.querySelectorAll(".deleteBtn").forEach((b) => {
+        b.addEventListener("click", async (e) => {
+          const id = e.target.dataset.id;
+          if (!confirm("Yakin ingin menghapus media ini?")) return;
+          try {
+            const res = await fetch(
+              `https://final-9pgj.onrender.com/api/media/${id}`,
+              {
+                method: "DELETE",
+                credentials: "include",
+              },
+            );
+            const data = await res.json();
+            if (res.ok && data.success) {
+              alert("Media dihapus");
+              await loadMediaList();
+            } else {
+              alert("Gagal menghapus: " + (data.message || ""));
+            }
+          } catch (err) {
+            console.error("Gagal delete:", err);
+            alert("Terjadi kesalahan saat menghapus.");
           }
-          openOverlay(item.overlayType, getFullUrl(item.overlayUrl));
         });
+      });
 
-        card.appendChild(title);
-        card.appendChild(img);
-        daftarMateri.appendChild(card);
+      tbody.querySelectorAll(".editBtn").forEach((b) => {
+        b.addEventListener("click", async (e) => {
+          const id = e.target.dataset.id;
+          const item = media.find((m) => m._id === id);
+          if (!item) return alert("Data tidak ditemukan untuk diedit.");
+
+          document.getElementById("editId").value = item._id;
+          document.getElementById("title").value = item.title || "";
+          document.getElementById("type").value = item.type || "";
+          document.getElementById("classLevel").value = item.kelas || "";
+          document.getElementById("category").value = item.submateri || "";
+          addBtnGlobal.textContent = "Update Media";
+
+          // simpan state ke localStorage agar tidak hilang saat idle/refresh
+          localStorage.setItem("admin_editId", item._id);
+          localStorage.setItem("admin_title", item.title || "");
+          localStorage.setItem("admin_type", item.type || "");
+          localStorage.setItem("admin_classLevel", item.kelas || "");
+          localStorage.setItem("admin_category", item.submateri || "");
+
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
       });
     } catch (err) {
-      console.error("Gagal memuat materi:", err);
-      daftarMateri.innerHTML = "<p>Terjadi kesalahan saat memuat materi.</p>";
+      console.error("Gagal memuat daftar media:", err);
     }
   }
 
-  async function tampilkanMediaApps() {
-    ubahDM("Media Audio & Video");
+  //helper jir
+  function getFullUrl(url) {
+    if (!url) return "-";
 
-    try {
-      const res = await fetch(`https://final-9pgj.onrender.com/api/media`, {
-        credentials: "include",
-      });
-      const data = await res.json();
+    // jika sudah full URL (http / https), pakai langsung
+    if (url.startsWith("http")) {
+      return url;
+    }
 
-      daftarMateri.innerHTML = "";
+    // jika masih relative path, tambahkan domain backend
+    return `https://final-9pgj.onrender.com${url}`;
+  }
 
-      if (!data || data.length === 0) {
-        daftarMateri.innerHTML = "<p>Tidak ada media tersedia.</p>";
-        return;
+  function appendQuestionToForm(fd) {
+    const isQuestionEl = document.getElementById("isQuestion");
+    const questionTypeEl = document.getElementById("questionType");
+
+    if (!isQuestionEl || !isQuestionEl.checked) return true;
+
+    const items = [];
+
+    document.querySelectorAll(".question-item").forEach((el, index) => {
+      const inputs = el.querySelectorAll("input, select");
+
+      const question = inputs[0]?.value?.trim(); // soal
+      const answer = inputs[1]?.value?.trim(); // jawaban
+
+      items.push({ question, answer });
+    });
+
+    if (items.length === 0 || items.some((i) => !i.answer)) {
+      alert("Jawaban belum diisi!");
+      return false;
+    }
+
+    fd.append("isQuestion", "true");
+    fd.append("questionType", questionTypeEl.value);
+    fd.append("questionItems", JSON.stringify(items));
+
+    return true;
+  }
+  // ==============================
+  // 🧭 NAVIGASI & TAMPILAN MATERI PADA HALAMAN INDEX
+  // ==============================
+  document.addEventListener("DOMContentLoaded", () => {
+    const menuItems = document.querySelectorAll(".menu-vertikal a");
+    const submenu = document.getElementById("submenu");
+    const submenuTitle = document.getElementById("submenu-title");
+    const submenuContent = document.getElementById("submenu-content");
+    const daftarMateri = document.getElementById("daftar-materi");
+    if (!daftarMateri) return;
+    const DM = document.getElementById("DM");
+
+    function ubahDM(teks) {
+      if (DM) DM.innerHTML = `<h3>${teks}</h3>`;
+    }
+
+    async function tampilkanMateri(kelas, submateri) {
+      localStorage.setItem("lastClass", kelas);
+      localStorage.setItem("lastSubmateri", submateri);
+      ubahDM(`Materi ${kelas} - ${submateri}`);
+
+      try {
+        const res = await fetch(
+          `https://final-9pgj.onrender.com/api/media/${encodeURIComponent(kelas)}/${encodeURIComponent(submateri)}`,
+          { credentials: "include" },
+        );
+        const data = await res.json();
+
+        daftarMateri.innerHTML = "";
+
+        if (!data || data.length === 0) {
+          daftarMateri.innerHTML = "<p>Tidak ada materi tersedia.</p>";
+          return;
+        }
+
+        data.forEach((item) => {
+          if (item.type !== "image") return;
+
+          const card = document.createElement("div");
+          card.className = "materi-card";
+
+          const title = document.createElement("h3");
+          title.textContent = item.title;
+
+          const img = document.createElement("img");
+          img.src = getFullUrl(item.url);
+          img.style.width = "100%";
+          img.style.height = "200px";
+          img.style.objectFit = "cover";
+          img.style.borderRadius = "8px";
+          img.style.cursor = "pointer";
+
+          img.addEventListener("click", () => {
+            if (!item.overlayType || !item.overlayUrl) {
+              console.log("Tidak ada overlay untuk item ini");
+              return;
+            }
+            openOverlay(item.overlayType, getFullUrl(item.overlayUrl));
+          });
+
+          card.appendChild(title);
+          card.appendChild(img);
+          daftarMateri.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Gagal memuat materi:", err);
+        daftarMateri.innerHTML = "<p>Terjadi kesalahan saat memuat materi.</p>";
+      }
+    }
+
+    async function tampilkanMediaApps() {
+      ubahDM("Media Audio & Video");
+
+      try {
+        const res = await fetch(`https://final-9pgj.onrender.com/api/media`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+
+        daftarMateri.innerHTML = "";
+
+        if (!data || data.length === 0) {
+          daftarMateri.innerHTML = "<p>Tidak ada media tersedia.</p>";
+          return;
+        }
+
+        data.forEach((item) => {
+          if (item.type === "image") return;
+
+          let mediaPreview = "";
+
+          if (item.type === "video") {
+            mediaPreview = `<video width="100%" height="200" controls src="${getFullUrl(item.url)}""></video>`;
+          }
+
+          if (item.type === "audio") {
+            mediaPreview = `<audio controls src="${getFullUrl(item.url)}""></audio>`;
+          }
+
+          const div = document.createElement("div");
+          div.className = "materi-card";
+          div.innerHTML = `<h3>${escapeHtml(item.title)}</h3>${mediaPreview}`;
+
+          daftarMateri.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Gagal memuat media:", err);
+        daftarMateri.innerHTML = "<p>Terjadi kesalahan saat memuat media.</p>";
+      }
+    }
+
+    // ==============================
+    // 🧠 FITUR SOAL (ADMIN)
+    // ==============================
+
+    const isQuestionEl = document.getElementById("isQuestion");
+    const questionTypeEl = document.getElementById("questionType");
+    const questionBuilder = document.getElementById("questionBuilder");
+
+    if (isQuestionEl && questionTypeEl && questionBuilder) {
+      function toggleQuestionUI() {
+        if (isQuestionEl.checked) {
+          questionTypeEl.style.display = "block";
+          renderQuestionBuilder();
+        } else {
+          questionTypeEl.style.display = "none";
+          questionBuilder.innerHTML = "";
+        }
       }
 
-      data.forEach((item) => {
-        if (item.type === "image") return;
+      // 🔥 FIX 1: trigger saat checkbox berubah
+      isQuestionEl.addEventListener("change", toggleQuestionUI);
 
-        let mediaPreview = "";
+      // 🔥 FIX 2: trigger saat type berubah
+      questionTypeEl.addEventListener("change", renderQuestionBuilder);
 
-        if (item.type === "video") {
-          mediaPreview = `<video width="100%" height="200" controls src="${getFullUrl(item.url)}""></video>`;
-        }
+      // 🔥 FIX 3: trigger saat pertama kali load
+      toggleQuestionUI();
 
-        if (item.type === "audio") {
-          mediaPreview = `<audio controls src="${getFullUrl(item.url)}""></audio>`;
-        }
+      function renderQuestionBuilder() {
+        const type = questionTypeEl.value;
+        const count = parseInt(document.getElementById("questionCount").value);
 
-        const div = document.createElement("div");
-        div.className = "materi-card";
-        div.innerHTML = `<h3>${escapeHtml(item.title)}</h3>${mediaPreview}`;
-
-        daftarMateri.appendChild(div);
-      });
-    } catch (err) {
-      console.error("Gagal memuat media:", err);
-      daftarMateri.innerHTML = "<p>Terjadi kesalahan saat memuat media.</p>";
-    }
-  }
-
-  // ==============================
-  // 🧠 FITUR SOAL (ADMIN)
-  // ==============================
-
-  const isQuestionEl = document.getElementById("isQuestion");
-  const questionTypeEl = document.getElementById("questionType");
-  const questionBuilder = document.getElementById("questionBuilder");
-
-  if (isQuestionEl && questionTypeEl && questionBuilder) {
-    function toggleQuestionUI() {
-      if (isQuestionEl.checked) {
-        questionTypeEl.style.display = "block";
-        renderQuestionBuilder();
-      } else {
-        questionTypeEl.style.display = "none";
         questionBuilder.innerHTML = "";
-      }
-    }
 
-    // 🔥 FIX 1: trigger saat checkbox berubah
-    isQuestionEl.addEventListener("change", toggleQuestionUI);
+        if (!count) {
+          questionBuilder.innerHTML = "<p>Pilih jumlah soal dulu</p>";
+          return;
+        }
 
-    // 🔥 FIX 2: trigger saat type berubah
-    questionTypeEl.addEventListener("change", renderQuestionBuilder);
+        const list = document.createElement("div");
+        list.id = "questionList";
+        questionBuilder.appendChild(list);
 
-    // 🔥 FIX 3: trigger saat pertama kali load
-    toggleQuestionUI();
+        for (let i = 0; i < count; i++) {
+          const div = document.createElement("div");
+          div.className = "question-item";
 
-function renderQuestionBuilder() {
-  const type = questionTypeEl.value;
-  const count = parseInt(document.getElementById("questionCount").value);
-
-  questionBuilder.innerHTML = "";
-
-  if (!count) {
-    questionBuilder.innerHTML = "<p>Pilih jumlah soal dulu</p>";
-    return;
-  }
-
-  const list = document.createElement("div");
-  list.id = "questionList";
-  questionBuilder.appendChild(list);
-
-  for (let i = 0; i < count; i++) {
-    const div = document.createElement("div");
-    div.className = "question-item";
-
-    // ================= TRUE FALSE =================
-    if (type === "truefalse") {
-      div.innerHTML = `
+          // ================= TRUE FALSE =================
+          if (type === "truefalse") {
+            div.innerHTML = `
         <p>Soal ${i + 1}</p>
         <input type="text" placeholder="Tulis pertanyaan">
         <select>
@@ -956,110 +961,110 @@ function renderQuestionBuilder() {
           <option value="false">False</option>
         </select>
       `;
-    }
+          }
 
-    // ================= ESSAY =================
-    else if (type === "essay") {
-      div.innerHTML = `
+          // ================= ESSAY =================
+          else if (type === "essay") {
+            div.innerHTML = `
         <p>Soal ${i + 1}</p>
         <input type="text" placeholder="Tulis pertanyaan">
         <input type="text" placeholder="Jawaban essay">
       `;
-    }
+          }
 
-    // ================= DEFAULT =================
-    else {
-      div.innerHTML = `
+          // ================= DEFAULT =================
+          else {
+            div.innerHTML = `
         <p>Jawaban ${i + 1}</p>
         <input type="text" placeholder="Jawaban">
       `;
+          }
+
+          list.appendChild(div);
+        }
+      }
+
+      const questionCountEl = document.getElementById("questionCount");
+
+      questionCountEl.addEventListener("change", renderQuestionBuilder);
     }
 
-    list.appendChild(div);
-  }
-}
+    // ==============================
+    // 📤 TAMBAH DATA SOAL KE FORM
+    // ==============================
 
-    const questionCountEl = document.getElementById("questionCount");
+    // 🔥 inject ke tombol add
+    // if (addBtnGlobal) {
+    //   const oldHandler = addBtnGlobal.onclick;
 
-    questionCountEl.addEventListener("change", renderQuestionBuilder);
-  }
+    //   addBtnGlobal.onclick = async (e) => {
+    //     e.preventDefault();
 
-  // ==============================
-  // 📤 TAMBAH DATA SOAL KE FORM
-  // ==============================
+    //     const fd = new FormData();
 
-  // 🔥 inject ke tombol add
-  // if (addBtnGlobal) {
-  //   const oldHandler = addBtnGlobal.onclick;
+    //     appendQuestionToForm(fd);
 
-  //   addBtnGlobal.onclick = async (e) => {
-  //     e.preventDefault();
+    //     if (oldHandler) oldHandler(e);
+    //   };
+    // }
 
-  //     const fd = new FormData();
+    // ==============================
+    // 🎯 INTERAKSI GAMBAR (USER)
+    // ==============================
 
-  //     appendQuestionToForm(fd);
+    function showOptionModal(item) {
+      const modal = document.getElementById("mediaModal");
+      const body = document.getElementById("modalBody");
 
-  //     if (oldHandler) oldHandler(e);
-  //   };
-  // }
-
-  // ==============================
-  // 🎯 INTERAKSI GAMBAR (USER)
-  // ==============================
-
-  function showOptionModal(item) {
-    const modal = document.getElementById("mediaModal");
-    const body = document.getElementById("modalBody");
-
-    body.innerHTML = `
+      body.innerHTML = `
     <button id="viewImage">Lihat Gambar</button>
     ${item.overlayUrl ? `<button id="viewMedia">Lihat Media</button>` : ""}
     ${item.isQuestion ? `<button id="viewQuestion">Lihat Soal</button>` : ""}
   `;
 
-    document.getElementById("viewImage").onclick = () => {
-      openOverlay("image", getFullUrl(item.url));
-    };
-
-    if (item.overlayUrl) {
-      document.getElementById("viewMedia").onclick = () => {
-        openOverlay(item.overlayType, getFullUrl(item.overlayUrl));
+      document.getElementById("viewImage").onclick = () => {
+        openOverlay("image", getFullUrl(item.url));
       };
+
+      if (item.overlayUrl) {
+        document.getElementById("viewMedia").onclick = () => {
+          openOverlay(item.overlayType, getFullUrl(item.overlayUrl));
+        };
+      }
+
+      if (item.isQuestion) {
+        document.getElementById("viewQuestion").onclick = () => {
+          renderQuestionUI(item);
+        };
+      }
+
+      modal.style.display = "flex";
     }
 
-    if (item.isQuestion) {
-      document.getElementById("viewQuestion").onclick = () => {
-        renderQuestionUI(item);
-      };
-    }
+    // ==============================
+    // 📝 RENDER SOAL
+    // ==============================
 
-    modal.style.display = "flex";
-  }
+    function renderQuestionUI(item) {
+      const body = document.getElementById("modalBody");
 
-  // ==============================
-  // 📝 RENDER SOAL
-  // ==============================
-
-  function renderQuestionUI(item) {
-    const body = document.getElementById("modalBody");
-
-    let html = `
+      let html = `
     <h3>${escapeHtml(item.title)}</h3>
     <img src="${getFullUrl(item.url)}" style="width:100%">
     <input id="studentName" placeholder="Nama">
     <input id="studentClass" placeholder="Kelas">
   `;
 
-    const questions = item.questionItems || [];
+      const questions = item.questionItems || [];
 
-    if (questions.length === 0) {
-      body.innerHTML += "<p>Tidak ada soal tersedia</p>";
-      return;
-    }
+      if (questions.length === 0) {
+        body.innerHTML += "<p>Tidak ada soal tersedia</p>";
+        return;
+      }
 
-    questions.forEach((q, i) => {
-      if (item.questionType === "truefalse") {
-        html += `
+      questions.forEach((q, i) => {
+        if (item.questionType === "truefalse") {
+          html += `
         <div>
           <p>Jawaban ${i + 1}</p>
           <select class="answer">
@@ -1068,248 +1073,249 @@ function renderQuestionBuilder() {
           </select>
         </div>
       `;
-      } else {
-        html += `
+        } else {
+          html += `
         <div>
           <p>${q.question}</p>
           <input class="answer" placeholder="Jawaban">
         </div>
       `;
-      }
-    });
-
-    html += `<button id="submitAnswer">Kirim Jawaban</button>`;
-
-    body.innerHTML = html;
-
-    document.getElementById("submitAnswer").onclick = async () => {
-      const nama = document.getElementById("studentName").value;
-      const kelas = document.getElementById("studentClass").value;
-
-      const answers = [];
-      document.querySelectorAll(".answer").forEach((el) => {
-        answers.push(el.value);
+        }
       });
 
-      await fetch("https://final-9pgj.onrender.com/api/submit-answer", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mediaId: item._id,
-          nama,
-          kelas,
-          answers,
-        }),
-      });
+      html += `<button id="submitAnswer">Kirim Jawaban</button>`;
 
-      alert("Jawaban terkirim!");
-    };
-  }
+      body.innerHTML = html;
 
-  // ==============================
-  // 🔁 UPDATE klik gambar
-  // ==============================
+      document.getElementById("submitAnswer").onclick = async () => {
+        const nama = document.getElementById("studentName").value;
+        const kelas = document.getElementById("studentClass").value;
 
-  const oldTampilkanMateri = tampilkanMateri;
+        const answers = [];
+        document.querySelectorAll(".answer").forEach((el) => {
+          answers.push(el.value);
+        });
 
-  tampilkanMateri = async function (kelas, submateri) {
-    await oldTampilkanMateri(kelas, submateri);
-
-    document.querySelectorAll(".materi-card img").forEach((img, index) => {
-      img.onclick = async () => {
-        const res = await fetch(
-          `https://final-9pgj.onrender.com/api/media/${kelas}/${submateri}`,
-          {
-            credentials: "include",
+        await fetch("https://final-9pgj.onrender.com/api/submit-answer", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
-        const data = await res.json();
-        showOptionModal(data[index]);
-      };
-    });
-  };
+          body: JSON.stringify({
+            mediaId: item._id,
+            nama,
+            kelas,
+            answers,
+          }),
+        });
 
-  function showSubmateriList(kelas) {
-    if (submenuTitle) submenuTitle.textContent = kelas;
-    ubahDM(`Daftar Materi - ${kelas}`);
-    submenuContent.innerHTML = `
+        alert("Jawaban terkirim!");
+      };
+    }
+
+    // ==============================
+    // 🔁 UPDATE klik gambar
+    // ==============================
+
+    const oldTampilkanMateri = tampilkanMateri;
+
+    tampilkanMateri = async function (kelas, submateri) {
+      await oldTampilkanMateri(kelas, submateri);
+
+      document.querySelectorAll(".materi-card img").forEach((img, index) => {
+        img.onclick = async () => {
+          const res = await fetch(
+            `https://final-9pgj.onrender.com/api/media/${kelas}/${submateri}`,
+            {
+              credentials: "include",
+            },
+          );
+          const data = await res.json();
+          showOptionModal(data[index]);
+        };
+      });
+    };
+
+    function showSubmateriList(kelas) {
+      if (submenuTitle) submenuTitle.textContent = kelas;
+      ubahDM(`Daftar Materi - ${kelas}`);
+      submenuContent.innerHTML = `
       <li class="sub-item" data-sub="Material">Material</li>
       <li class="sub-item" data-sub="Vocabulary">Vocabulary</li>
       <li class="sub-item" data-sub="Tasks">Tasks</li>
       <li class="sub-item" data-sub="Games">Games</li>
     `;
-    submenu.classList.add("show");
+      submenu.classList.add("show");
 
-    daftarMateri.innerHTML = `
+      daftarMateri.innerHTML = `
       <div class="materi-card" data-sub="Material"><h3>Material</h3></div>
       <div class="materi-card" data-sub="Vocabulary"><h3>Vocabulary</h3></div>
       <div class="materi-card" data-sub="Tasks"><h3>Tasks</h3></div>
       <div class="materi-card" data-sub="Games"><h3>Games</h3></div>
     `;
 
-    document
-      .querySelectorAll(".sub-item, .materi-card[data-sub]")
-      .forEach((el) => {
-        el.addEventListener("click", () =>
-          tampilkanMateri(kelas, el.dataset.sub),
-        );
-      });
-  }
+      document
+        .querySelectorAll(".sub-item, .materi-card[data-sub]")
+        .forEach((el) => {
+          el.addEventListener("click", () =>
+            tampilkanMateri(kelas, el.dataset.sub),
+          );
+        });
+    }
 
-  function showClassList() {
-    if (!submenuTitle || !submenuContent || !submenu || !daftarMateri) return;
+    function showClassList() {
+      if (!submenuTitle || !submenuContent || !submenu || !daftarMateri) return;
 
-    submenuTitle.textContent = "Resources";
-    ubahDM("Daftar Kelas");
+      submenuTitle.textContent = "Resources";
+      ubahDM("Daftar Kelas");
 
-    submenuContent.innerHTML = `
+      submenuContent.innerHTML = `
       <li class="dropdown" data-class="Class 10">Class 10 ▾</li>
       <li class="dropdown" data-class="Class 11">Class 11 ▾</li>
       <li class="dropdown" data-class="Class 12">Class 12 ▾</li>
     `;
 
-    submenu.classList.add("show");
+      submenu.classList.add("show");
 
-    daftarMateri.innerHTML = `
+      daftarMateri.innerHTML = `
       <div class="materi-card" data-class="Class 10"><h3>Class 10</h3></div>
       <div class="materi-card" data-class="Class 11"><h3>Class 11</h3></div>
       <div class="materi-card" data-class="Class 12"><h3>Class 12</h3></div>
     `;
 
-    document.querySelectorAll("[data-class]").forEach((el) => {
-      el.addEventListener("click", () => showSubmateriList(el.dataset.class));
+      document.querySelectorAll("[data-class]").forEach((el) => {
+        el.addEventListener("click", () => showSubmateriList(el.dataset.class));
+      });
+    }
+
+    menuItems.forEach((item) => {
+      item.addEventListener("click", (e) => {
+        e.preventDefault();
+        menuItems.forEach((m) => m.classList.remove("hover"));
+        item.classList.add("hover");
+
+        switch (item.id) {
+          case "menu-resources":
+            showClassList();
+            break;
+          case "menu-classes":
+            submenuTitle.textContent = "Classes";
+            ubahDM("Halaman Classes");
+            submenuContent.innerHTML =
+              "<li>Daftar kelas akan ditambahkan.</li>";
+            daftarMateri.innerHTML = "";
+            break;
+          case "menu-apps":
+            submenuTitle.textContent = "Media";
+            submenuContent.innerHTML =
+              "<li>Media belajar akan ditampilkan di sini.</li>";
+            submenu.classList.add("show");
+            tampilkanMediaApps();
+            break;
+          case "menu-support":
+            submenuTitle.textContent = "Support";
+            ubahDM("Pusat Bantuan");
+            submenuContent.innerHTML = "<li>Hubungi admin untuk bantuan.</li>";
+            daftarMateri.innerHTML = "";
+            break;
+          default:
+            ubahDM("Selamat Datang!");
+        }
+      });
     });
+
+    // restore last viewed materi jika ada
+    const lastClass = localStorage.getItem("lastClass");
+    const lastSubmateri = localStorage.getItem("lastSubmateri");
+    if (lastClass && lastSubmateri) {
+      setTimeout(() => {
+        tampilkanMateri(lastClass, lastSubmateri);
+        submenuTitle.textContent = lastClass;
+        submenu.classList.add("show");
+      }, 300);
+    }
+
+    showClassList();
+  });
+
+  // ==============================
+  // Helper
+  // ==============================
+  function escapeHtml(unsafe) {
+    if (!unsafe && unsafe !== 0) return "";
+    return String(unsafe)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
-  menuItems.forEach((item) => {
-    item.addEventListener("click", (e) => {
-      e.preventDefault();
-      menuItems.forEach((m) => m.classList.remove("hover"));
-      item.classList.add("hover");
+  // ==============================
+  // POPUP OVERLAY
+  // ==============================
+  const typeSelect = document.getElementById("type");
+  const overlayType = document.getElementById("overlayType");
+  const overlayFile = document.getElementById("overlayFile");
 
-      switch (item.id) {
-        case "menu-resources":
-          showClassList();
-          break;
-        case "menu-classes":
-          submenuTitle.textContent = "Classes";
-          ubahDM("Halaman Classes");
-          submenuContent.innerHTML = "<li>Daftar kelas akan ditambahkan.</li>";
-          daftarMateri.innerHTML = "";
-          break;
-        case "menu-apps":
-          submenuTitle.textContent = "Media";
-          submenuContent.innerHTML =
-            "<li>Media belajar akan ditampilkan di sini.</li>";
-          submenu.classList.add("show");
-          tampilkanMediaApps();
-          break;
-        case "menu-support":
-          submenuTitle.textContent = "Support";
-          ubahDM("Pusat Bantuan");
-          submenuContent.innerHTML = "<li>Hubungi admin untuk bantuan.</li>";
-          daftarMateri.innerHTML = "";
-          break;
-        default:
-          ubahDM("Selamat Datang!");
+  if (typeSelect && overlayType && overlayFile) {
+    typeSelect.addEventListener("change", () => {
+      if (typeSelect.value === "image") {
+        overlayType.style.display = "block";
+      } else {
+        overlayType.value = "";
+        overlayType.style.display = "none";
+        overlayFile.style.display = "none";
       }
     });
-  });
 
-  // restore last viewed materi jika ada
-  const lastClass = localStorage.getItem("lastClass");
-  const lastSubmateri = localStorage.getItem("lastSubmateri");
-  if (lastClass && lastSubmateri) {
-    setTimeout(() => {
-      tampilkanMateri(lastClass, lastSubmateri);
-      submenuTitle.textContent = lastClass;
-      submenu.classList.add("show");
-    }, 300);
+    overlayType.addEventListener("change", () => {
+      if (overlayType.value) {
+        overlayFile.style.display = "block";
+        overlayFile.accept =
+          overlayType.value === "audio" ? "audio/*" : "video/*";
+      } else {
+        overlayFile.style.display = "none";
+      }
+    });
   }
 
-  showClassList();
-});
+  const closeBtn = document.getElementById("closeModal");
+  if (closeBtn) {
+    closeBtn.onclick = function () {
+      document.getElementById("mediaModal").style.display = "none";
+      document.getElementById("modalBody").innerHTML = "";
+    };
+  }
 
-// ==============================
-// Helper
-// ==============================
-function escapeHtml(unsafe) {
-  if (!unsafe && unsafe !== 0) return "";
-  return String(unsafe)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+  function openOverlay(type, url) {
+    const modal = document.getElementById("mediaModal");
+    const body = document.getElementById("modalBody");
 
-// ==============================
-// POPUP OVERLAY
-// ==============================
-const typeSelect = document.getElementById("type");
-const overlayType = document.getElementById("overlayType");
-const overlayFile = document.getElementById("overlayFile");
+    if (!modal || !body) return;
 
-if (typeSelect && overlayType && overlayFile) {
-  typeSelect.addEventListener("change", () => {
-    if (typeSelect.value === "image") {
-      overlayType.style.display = "block";
-    } else {
-      overlayType.value = "";
-      overlayType.style.display = "none";
-      overlayFile.style.display = "none";
+    body.innerHTML = "";
+
+    if (type === "image") {
+      body.innerHTML = `<img src="${url}" style="width:100%">`;
     }
-  });
 
-  overlayType.addEventListener("change", () => {
-    if (overlayType.value) {
-      overlayFile.style.display = "block";
-      overlayFile.accept =
-        overlayType.value === "audio" ? "audio/*" : "video/*";
-    } else {
-      overlayFile.style.display = "none";
+    if (type === "video") {
+      body.innerHTML = `<video controls style="width:100%"><source src="${url}"></video>`;
     }
-  });
-}
 
-const closeBtn = document.getElementById("closeModal");
-if (closeBtn) {
-  closeBtn.onclick = function () {
-    document.getElementById("mediaModal").style.display = "none";
-    document.getElementById("modalBody").innerHTML = "";
-  };
-}
+    if (type === "audio") {
+      body.innerHTML = `<audio controls style="width:100%"><source src="${url}"></audio>`;
+    }
 
-function openOverlay(type, url) {
-  const modal = document.getElementById("mediaModal");
-  const body = document.getElementById("modalBody");
-
-  if (!modal || !body) return;
-
-  body.innerHTML = "";
-
-  if (type === "image") {
-    body.innerHTML = `<img src="${url}" style="width:100%">`;
+    modal.style.display = "flex";
   }
 
-  if (type === "video") {
-    body.innerHTML = `<video controls style="width:100%"><source src="${url}"></video>`;
-  }
+  window.openOverlay = openOverlay;
 
-  if (type === "audio") {
-    body.innerHTML = `<audio controls style="width:100%"><source src="${url}"></audio>`;
-  }
-
-  modal.style.display = "flex";
-}
-
-window.openOverlay = openOverlay;
-
-appendQuestionToForm
- document.querySelectorAll(".question-item").forEach((el, index) => {
+  appendQuestionToForm;
+  document.querySelectorAll(".question-item").forEach((el, index) => {
     const input = el.querySelector("input");
     const select = el.querySelector("select");
 
@@ -1842,4 +1848,3 @@ function openOverlay(type, url) {
 }
 
 window.openOverlay = openOverlay;
-
