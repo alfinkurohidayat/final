@@ -375,6 +375,25 @@ function getFullUrl(url) {
   return `https://final-9pgj.onrender.com${url}`;
 }
 
+function appendQuestionToForm(fd) {
+  if (!isQuestionEl || !isQuestionEl.checked) return;
+
+  const items = [];
+  document.querySelectorAll(".question-item").forEach((el) => {
+    const input = el.querySelector("input");
+    const select = el.querySelector("select");
+
+    items.push({
+      question: input.value,
+      answer: select ? select.value : "",
+    });
+  });
+
+  fd.append("isQuestion", true);
+  fd.append("questionType", questionTypeEl.value);
+  fd.append("questionItems", JSON.stringify(items));
+}
+
 // ==============================
 // 🧭 NAVIGASI & TAMPILAN MATERI PADA HALAMAN INDEX
 // ==============================
@@ -542,25 +561,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==============================
   // 📤 TAMBAH DATA SOAL KE FORM
   // ==============================
-
-  function appendQuestionToForm(fd) {
-    if (!isQuestionEl || !isQuestionEl.checked) return;
-
-    const items = [];
-    document.querySelectorAll(".question-item").forEach((el) => {
-      const input = el.querySelector("input");
-      const select = el.querySelector("select");
-
-      items.push({
-        question: input.value,
-        answer: select ? select.value : "",
-      });
-    });
-
-    fd.append("isQuestion", true);
-    fd.append("questionType", questionTypeEl.value);
-    fd.append("questionItems", JSON.stringify(items));
-  }
 
   // 🔥 inject ke tombol add
   // if (addBtnGlobal) {
@@ -874,5 +874,3 @@ function openOverlay(type, url) {
 }
 
 window.openOverlay = openOverlay;
-
-oldHandler;
