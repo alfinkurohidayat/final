@@ -379,6 +379,7 @@ function appendQuestionToForm(fd) {
   const isQuestionEl = document.getElementById("isQuestion");
   const questionTypeEl = document.getElementById("questionType");
 
+  // ❌ kalau tidak dicentang → stop
   if (!isQuestionEl || !isQuestionEl.checked) return;
 
   const items = [];
@@ -387,15 +388,28 @@ function appendQuestionToForm(fd) {
     const input = el.querySelector("input");
     const select = el.querySelector("select");
 
+    const questionText = input?.value.trim();
+
+    // 🔥 skip kalau kosong
+    if (!questionText) return;
+
     items.push({
-      question: input.value,
+      question: questionText,
       answer: select ? select.value : "",
     });
   });
 
-  fd.append("isQuestion", true);
-  fd.append("questionType", questionTypeEl.value);
+  // ❌ kalau tidak ada soal → jangan kirim
+  if (items.length === 0) {
+    alert("Soal belum diisi!");
+    return;
+  }
+
+  fd.append("isQuestion", "true"); // 🔥 pakai string biar aman
+  fd.append("questionType", questionTypeEl?.value || "essay");
   fd.append("questionItems", JSON.stringify(items));
+
+  console.log("SOAL DIKIRIM:", items); // debug
 }
 // ==============================
 // 🧭 NAVIGASI & TAMPILAN MATERI PADA HALAMAN INDEX
@@ -635,7 +649,14 @@ document.addEventListener("DOMContentLoaded", () => {
     <input id="studentClass" placeholder="Kelas">
   `;
 
-    item.questionItems.forEach((q, i) => {
+    const questions = item.questionItems || [];
+
+    if (questions.length === 0) {
+      body.innerHTML += "<p>Tidak ada soal tersedia</p>";
+      return;
+    }
+
+    questions.forEach((q, i) => {
       if (item.questionType === "truefalse") {
         html += `
         <div>
