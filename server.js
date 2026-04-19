@@ -447,7 +447,9 @@ import dotenv from "dotenv";
 import multer from "multer";
 import cors from "cors";
 import { fileURLToPath } from "url";
-import { put, deleteBlob } from "@vercel/blob";
+import { v2 as cloudinary } from "cloudinary";
+import path from "path";
+import fs from "fs";
 
 dotenv.config();
 
@@ -549,7 +551,19 @@ function checkAuth(req, res, next) {
 // UPLOAD CONFIG
 // ==============================
 
-const storage = multer.memoryStorage();
+const storage = multer.memoryStorage({
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype.startsWith("image/") ||
+      file.mimetype.startsWith("video/") ||
+      file.mimetype.startsWith("audio/")
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error("File type tidak didukung"), false);
+    }
+  },
+});
 const upload = multer({ storage });
 
 // ==============================
