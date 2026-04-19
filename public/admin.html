@@ -6,6 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Admin | Website Pembelajaran</title>
     <link rel="stylesheet" href="css/login.css">
+
+    <style>
+        .question-box {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .question-item {
+            margin-top: 10px;
+        }
+
+        .answer-table {
+            margin-top: 40px;
+        }
+    </style>
 </head>
 
 <body>
@@ -18,10 +35,9 @@
         </nav>
     </header>
 
-    <!-- Container utama -->
     <main class="admin-container">
 
-        <!-- Bagian Login -->
+        <!-- LOGIN -->
         <section id="login-section" class="login-container">
             <h2>Login Admin</h2>
             <input type="text" id="username" placeholder="Username">
@@ -30,15 +46,17 @@
             <p id="login-msg"></p>
         </section>
 
-        <!-- Bagian Dashboard Admin -->
+        <!-- ADMIN PANEL -->
         <section id="admin-section" style="display:none;">
             <h1>Kelola Media Pembelajaran</h1>
 
-            <!-- Form tambah media -->
+            <!-- FORM -->
             <form class="admin-form" enctype="multipart/form-data">
-                <input type="hidden" id="editId"> <!-- ✅ Tambahan untuk menyimpan ID yang diedit -->
+
+                <input type="hidden" id="editId">
 
                 <input type="text" id="title" placeholder="Judul Materi" required>
+
                 <select id="type" required>
                     <option value="">Pilih Jenis</option>
                     <option value="video">Video</option>
@@ -61,25 +79,37 @@
                     <option value="Games">Games</option>
                 </select>
 
+                <!-- Overlay -->
                 <select id="overlayType">
                     <option value="">Tanpa Media Tambahan</option>
                     <option value="audio">Sisip Audio</option>
                     <option value="video">Sisip Video</option>
                 </select>
 
-                <input type="file" id="overlayFile" accept="audio/*,video/*" style="display:none;">
+                <input type="file" id="overlayFile" style="display:none;">
 
                 <input type="file" id="mediaFile" accept="video/*,audio/*,image/*">
 
+                <!-- 🔥 FITUR SOAL -->
+                <div class="question-box">
+                    <label>
+                        <input type="checkbox" id="isQuestion">
+                        Jadikan sebagai soal
+                    </label>
+
+                    <select id="questionType" style="display:none;">
+                        <option value="truefalse">True / False</option>
+                        <option value="essay">Essay</option>
+                    </select>
+
+                    <div id="questionBuilder"></div>
+                </div>
+
                 <button type="button" id="addBtn">Tambah Media</button>
+
             </form>
 
-
-
-
-
-            <!-- Tabel daftar media -->
-            <!-- Tabel daftar media -->
+            <!-- TABLE MEDIA -->
             <table class="admin-table" id="media-admin-list">
                 <thead>
                     <tr>
@@ -91,15 +121,64 @@
                         <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody></tbody> <!-- ✅ Tambahkan ini -->
+                <tbody></tbody>
             </table>
 
+            <!-- 🔥 DATA JAWABAN SISWA -->
+            <div class="answer-table">
+                <h2>Data Jawaban Siswa</h2>
+                <button onclick="loadAnswers()">Refresh</button>
+
+                <table border="1" width="100%">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Kelas</th>
+                            <th>Jawaban</th>
+                            <th>Waktu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="answerTable"></tbody>
+                </table>
+            </div>
 
         </section>
 
     </main>
 
     <script type="module" src="script.js"></script>
+
+    <script>
+        async function loadAnswers() {
+            try {
+                const res = await fetch("https://final-9pgj.onrender.com/api/answers", {
+                    credentials: "include"
+                });
+
+                const data = await res.json();
+                const tbody = document.getElementById("answerTable");
+
+                tbody.innerHTML = "";
+
+                data.forEach(item => {
+                    const tr = document.createElement("tr");
+
+                    tr.innerHTML = `
+                        <td>${item.nama}</td>
+                        <td>${item.kelas}</td>
+                        <td>${item.answers.join(", ")}</td>
+                        <td>${new Date(item.createdAt).toLocaleString()}</td>
+                    `;
+
+                    tbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error("Gagal load jawaban:", err);
+            }
+        }
+    </script>
+
 </body>
 
 </html>

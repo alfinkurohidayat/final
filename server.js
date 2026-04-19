@@ -20,7 +20,7 @@ app.set("trust proxy", 1);
 
 app.use(
   cors({
-    origin: true,
+    origin: ["http://localhost:5001", "https://final-9pgj.onrender.com"],
     credentials: true,
   }),
 );
@@ -29,11 +29,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-mongoose
-  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/elearning")
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
+// ==============================
+// 🔌 DATABASE
+// ==============================
+mongoose.connect(
+  process.env.MONGO_URI || "mongodb://localhost:27017/elearning",
+);
 
+// ==============================
+// 🔐 SESSION
+// ==============================
 app.use(
   session({
     name: "connect.sid",
@@ -44,20 +49,26 @@ app.use(
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true, // ⬅️ WAJIB (Render pakai HTTPS)
+      sameSite: "none", // ⬅️ INI KUNCI UTAMA (biar cookie dikirim)
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },
     rolling: true,
   }),
 );
 
+// ==============================
+// ☁️ CLOUDINARY
+// ==============================
 cloudinary.config({
   cloud_name: "djndmhjih",
   api_key: "636163288134166",
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
+// ==============================
+// 📦 SCHEMA MEDIA (UPDATED)
+// ==============================
 const mediaSchema = new mongoose.Schema(
   {
     title: String,
@@ -65,22 +76,57 @@ const mediaSchema = new mongoose.Schema(
     url: String,
     kelas: String,
     submateri: String,
+
     overlayType: String,
     overlayUrl: String,
+
+    // 🔥 NEW (SOAL)
+    isQuestion: { type: Boolean, default: false },
+    questionType: String, // "truefalse" | "essay"
+    questionItems: [
+      {
+        question: String,
+        answer: String, // untuk admin referensi
+      },
+    ],
   },
   { timestamps: true },
 );
 
 const Media = mongoose.model("Media", mediaSchema);
 
+// ==============================
+// 📦 SCHEMA JAWABAN SISWA
+// ==============================
+const answerSchema = new mongoose.Schema(
+  {
+    mediaId: mongoose.Schema.Types.ObjectId,
+    nama: String,
+    kelas: String,
+    answers: [String],
+  },
+  { timestamps: true },
+);
+
+const Answer = mongoose.model("Answer", answerSchema);
+
+// ==============================
+// 🔐 AUTH
+// ==============================
 const checkAuth = (req, res, next) => {
   if (req.session?.isAdmin) return next();
-  res.status(401).json({ success: false, message: "Unauthorized" });
+  res.status(401).json({ success: false });
 };
 
+// ==============================
+// 📂 UPLOAD
+// ==============================
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+// ==============================
+// 🔐 LOGIN
+// ==============================
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
   if (
@@ -88,7 +134,7 @@ app.post("/login", (req, res) => {
     password === process.env.ADMIN_PASS
   ) {
     req.session.isAdmin = true;
-    res.json({ success: true, message: "Login OK" });
+    res.json({ success: true });
   } else {
     res.status(401).json({ success: false });
   }
@@ -102,27 +148,25 @@ app.post("/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
+// ==============================
+// 📥 GET MEDIA
+// ==============================
 app.get("/api/media", async (req, res) => {
-  try {
-    const media = await Media.find().sort({ createdAt: -1 });
-    res.json(media);
-  } catch (err) {
-    res.status(500).json({ success: false });
-  }
+  const media = await Media.find().sort({ createdAt: -1 });
+  res.json(media);
 });
 
 app.get("/api/media/:kelas/:submateri", async (req, res) => {
-  try {
-    const media = await Media.find({
-      kelas: req.params.kelas,
-      submateri: req.params.submateri,
-    });
-    res.json(media);
-  } catch {
-    res.status(500).json({ success: false });
-  }
+  const media = await Media.find({
+    kelas: req.params.kelas,
+    submateri: req.params.submateri,
+  });
+  res.json(media);
 });
 
+// ==============================
+// ➕ CREATE MEDIA (UPDATED)
+// ==============================
 app.post(
   "/api/media",
   checkAuth,
@@ -132,31 +176,36 @@ app.post(
   ]),
   async (req, res) => {
     try {
-      if (!req.files?.mediaFile)
-        return res.status(400).json({ success: false, message: "File wajib" });
-
       const mainFile = req.files.mediaFile[0];
+
       const result = await new Promise((resolve, reject) => {
         cloudinary.uploader
           .upload_stream(
             { resource_type: "auto", folder: "e-learning" },
-            (error, result) => (error ? reject(error) : resolve(result)),
+            (err, result) => (err ? reject(err) : resolve(result)),
           )
           .end(mainFile.buffer);
       });
 
       let overlayUrl = null;
+
       if (req.files.overlayFile) {
         const overlayFile = req.files.overlayFile[0];
         const overlayResult = await new Promise((resolve, reject) => {
           cloudinary.uploader
             .upload_stream(
               { resource_type: "auto", folder: "e-learning" },
-              (error, result) => (error ? reject(error) : resolve(result)),
+              (err, result) => (err ? reject(err) : resolve(result)),
             )
             .end(overlayFile.buffer);
         });
         overlayUrl = overlayResult.secure_url;
+      }
+
+      // 🔥 PARSE SOAL
+      let questionItems = [];
+      if (req.body.questionItems) {
+        questionItems = JSON.parse(req.body.questionItems);
       }
 
       const media = await Media.create({
@@ -165,8 +214,14 @@ app.post(
         kelas: req.body.kelas,
         submateri: req.body.submateri,
         url: result.secure_url,
+
         overlayType: req.body.overlayType || null,
         overlayUrl,
+
+        // 🔥 SOAL
+        isQuestion: req.body.isQuestion === "true",
+        questionType: req.body.questionType,
+        questionItems,
       });
 
       res.json({ success: true, data: media });
@@ -177,78 +232,58 @@ app.post(
   },
 );
 
-app.put(
-  "/api/media/:id",
-  checkAuth,
-  upload.single("mediaFile"),
-  async (req, res) => {
-    try {
-      const media = await Media.findById(req.params.id);
-      if (!media) return res.status(404).json({ success: false });
-
-      media.title = req.body.title;
-      media.type = req.body.type;
-      media.kelas = req.body.kelas;
-      media.submateri = req.body.submateri;
-
-      if (req.file) {
-        if (media.url) {
-          const publicId = media.url.split("/").pop().split(".")[0];
-          await cloudinary.uploader.destroy(publicId);
-        }
-        const result = await new Promise((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream(
-              { resource_type: "auto", folder: "e-learning" },
-              (error, result) => (error ? reject(error) : resolve(result)),
-            )
-            .end(req.file.buffer);
-        });
-        media.url = result.secure_url;
-      }
-
-      await media.save();
-      res.json({ success: true, data: media });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ success: false });
-    }
-  },
-);
-
-app.delete("/api/media/:id", checkAuth, async (req, res) => {
+//update
+app.put("/api/media/:id", checkAuth, async (req, res) => {
   try {
-    const media = await Media.findById(req.params.id);
-    if (!media) return res.status(404).json({ success: false });
-
-    if (media.url) {
-      const publicId = media.url.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(publicId);
-    }
-    if (media.overlayUrl) {
-      const publicIdOverlay = media.overlayUrl.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(publicIdOverlay);
-    }
-
-    await media.deleteOne();
-    res.json({ success: true });
+    const updated = await Media.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res.json({ success: true, data: updated });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ success: false });
   }
 });
 
-app.use((err, req, res, next) => {
-  console.error("ERROR:", err);
-  res.status(500).json({ success: false, error: err.message });
+//delete
+app.delete("/api/media/:id", checkAuth, async (req, res) => {
+  try {
+    await Media.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
 });
 
+// ==============================
+// 📤 SUBMIT JAWABAN SISWA
+// ==============================
+app.post("/api/submit-answer", async (req, res) => {
+  try {
+    const { mediaId, nama, kelas, answers } = req.body;
+
+    const data = await Answer.create({
+      mediaId,
+      nama,
+      kelas,
+      answers,
+    });
+
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// ==============================
+// 📊 ADMIN LIHAT JAWABAN
+// ==============================
+app.get("/api/answers", checkAuth, async (req, res) => {
+  const data = await Answer.find().sort({ createdAt: -1 });
+  res.json(data);
+});
+
+// ==============================
+// 🚀 START SERVER
+// ==============================
 const PORT = process.env.PORT || 5001;
-mongoose
-  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/elearning")
-  .then(() => {
-    app.listen(PORT, () =>
-      console.log(`🚀 Server port ${PORT} - Cloudinary OK`),
-    );
-  })
-  .catch((err) => console.error("DB fail:", err));
+app.listen(PORT, () => console.log(`🚀 Server running ${PORT}`));
