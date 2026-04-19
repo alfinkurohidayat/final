@@ -163,9 +163,13 @@ if (addBtnGlobal) {
       fd.append("mediaFile", fileInput.files[0]);
 
       fd.append("overlayType", overlayType.value);
+
       if (overlayFile.files.length > 0) {
         fd.append("overlayFile", overlayFile.files[0]);
       }
+
+      // ✅ TAMBAHKAN INI
+      appendQuestionToForm(fd);
 
       try {
         const res = await fetch("https://final-9pgj.onrender.com/api/media", {
@@ -559,19 +563,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 🔥 inject ke tombol add
-  if (addBtnGlobal) {
-    const oldHandler = addBtnGlobal.onclick;
+  // if (addBtnGlobal) {
+  //   const oldHandler = addBtnGlobal.onclick;
 
-    addBtnGlobal.onclick = async (e) => {
-      e.preventDefault();
+  //   addBtnGlobal.onclick = async (e) => {
+  //     e.preventDefault();
 
-      const fd = new FormData();
+  //     const fd = new FormData();
 
-      appendQuestionToForm(fd);
+  //     appendQuestionToForm(fd);
 
-      if (oldHandler) oldHandler(e);
-    };
-  }
+  //     if (oldHandler) oldHandler(e);
+  //   };
+  // }
 
   // ==============================
   // 🎯 INTERAKSI GAMBAR (USER)
@@ -871,4 +875,4 @@ function openOverlay(type, url) {
 
 window.openOverlay = openOverlay;
 
-addBtnGlobal;
+oldHandler;

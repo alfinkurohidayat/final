@@ -204,8 +204,18 @@ app.post(
 
       // 🔥 PARSE SOAL
       let questionItems = [];
-      if (req.body.questionItems) {
-        questionItems = JSON.parse(req.body.questionItems);
+      let questionType = null;
+
+      if (req.body.isQuestion) {
+        questionType = req.body.questionType;
+
+        if (req.body.questionItems) {
+          try {
+            questionItems = JSON.parse(req.body.questionItems);
+          } catch (e) {
+            console.error("Gagal parse questionItems:", e);
+          }
+        }
       }
 
       const media = await Media.create({
@@ -219,7 +229,10 @@ app.post(
         overlayUrl,
 
         // 🔥 SOAL
-        isQuestion: req.body.isQuestion === "true",
+        isQuestion:
+          req.body.isQuestion === "true" ||
+          req.body.isQuestion === true ||
+          req.body.isQuestion === "on",
         questionType: req.body.questionType,
         questionItems,
       });
