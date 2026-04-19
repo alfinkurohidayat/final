@@ -546,13 +546,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderQuestionBuilder() {
       const type = questionTypeEl.value;
-      const count = Math.min(
-        10,
-        Math.max(
-          1,
-          parseInt(document.getElementById("questionCount").value || 1),
-        ),
-      );
+      const count = parseInt(document.getElementById("questionCount").value);
 
       const questionList = document.createElement("div");
       questionList.id = "questionList";
@@ -591,19 +585,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const questionCountEl = document.getElementById("questionCount");
 
     questionCountEl.addEventListener("change", renderQuestionBuilder);
-  }
-
-  const questionCountEl = document.getElementById("questionCount");
-
-  if (questionCountEl) {
-    questionCountEl.addEventListener("input", () => {
-      let val = parseInt(questionCountEl.value || 1);
-
-      if (val > 10) val = 10;
-      if (val < 1) val = 1;
-
-      questionCountEl.value = val;
-    });
   }
 
   // ==============================
@@ -675,12 +656,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const questions = item.questionItems || [];
 
     if (questions.length === 0) {
-      body.innerHTML = html + "<p>Tidak ada soal tersedia</p>";
-      return;
-    }
-
-    if (!Array.isArray(questions)) {
-      console.warn("questionItems tidak valid");
+      body.innerHTML += "<p>Tidak ada soal tersedia</p>";
       return;
     }
 
@@ -717,10 +693,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".answer").forEach((el) => {
         answers.push(el.value);
       });
-      if (!nama || !kelas) {
-        alert("Nama dan kelas wajib diisi!");
-        return;
-      }
+
       await fetch("https://final-9pgj.onrender.com/api/submit-answer", {
         method: "POST",
         credentials: "include",
