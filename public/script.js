@@ -379,7 +379,7 @@ function appendQuestionToForm(fd) {
   const isQuestionEl = document.getElementById("isQuestion");
   const questionTypeEl = document.getElementById("questionType");
 
-  if (!isQuestionEl || !isQuestionEl.checked) return;
+  if (!isQuestionEl || !isQuestionEl.checked) return true;
 
   const items = [];
 
@@ -387,19 +387,23 @@ function appendQuestionToForm(fd) {
     const input = el.querySelector("input");
     const select = el.querySelector("select");
 
+    const value = select ? select.value : input?.value?.trim();
+
     items.push({
-      answer: select ? select.value : input?.value || "",
+      answer: value || "",
     });
   });
 
-  if (items.length === 0) {
+  if (items.length === 0 || items.some((i) => !i.answer)) {
     alert("Jawaban belum diisi!");
-    return;
+    return false;
   }
 
   fd.append("isQuestion", "true");
   fd.append("questionType", questionTypeEl.value);
   fd.append("questionItems", JSON.stringify(items));
+
+  return true;
 }
 // ==============================
 // 🧭 NAVIGASI & TAMPILAN MATERI PADA HALAMAN INDEX
