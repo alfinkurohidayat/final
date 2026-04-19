@@ -950,9 +950,11 @@ async function loadMediaList() {
 
     media.forEach((item) => {
       const tr = document.createElement("tr");
-      const urlDisplay = item.url
-        ? `https://final-9pgj.onrender.com${item.url}`
-        : "-";
+      function getFullUrl(url) {
+        return url.startsWith("http")
+          ? url
+          : `https://final-9pgj.onrender.com${url}`;
+      }
       tr.innerHTML = `
         <td>${escapeHtml(item.title)}</td>
         <td>${escapeHtml(item.type)}</td>
@@ -1064,7 +1066,11 @@ document.addEventListener("DOMContentLoaded", () => {
         title.textContent = item.title;
 
         const img = document.createElement("img");
-        img.src = `https://final-9pgj.onrender.com${item.url}`;
+        function getFullUrl(url) {
+          return url.startsWith("http")
+            ? url
+            : `https://final-9pgj.onrender.com${url}`;
+        }
         img.style.width = "100%";
         img.style.height = "200px";
         img.style.objectFit = "cover";
@@ -1076,10 +1082,11 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Tidak ada overlay untuk item ini");
             return;
           }
-          openOverlay(
-            item.overlayType,
-            `https://final-9pgj.onrender.com${item.overlayUrl}`,
-          );
+          function getFullUrl(url) {
+            return url.startsWith("http")
+              ? url
+              : `https://final-9pgj.onrender.com${url}`;
+          }
         });
 
         card.appendChild(title);
