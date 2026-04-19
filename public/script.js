@@ -950,9 +950,7 @@ async function loadMediaList() {
 
     media.forEach((item) => {
       const tr = document.createElement("tr");
-      const urlDisplay = item.url
-        ? `https://final-9pgj.onrender.com${item.url}`
-        : "-";
+      const urlDisplay = getFullUrl(item.url);
       tr.innerHTML = `
         <td>${escapeHtml(item.title)}</td>
         <td>${escapeHtml(item.type)}</td>
@@ -1021,6 +1019,19 @@ async function loadMediaList() {
   }
 }
 
+//helper jir
+function getFullUrl(url) {
+  if (!url) return "-";
+
+  // jika sudah full URL (http / https), pakai langsung
+  if (url.startsWith("http")) {
+    return url;
+  }
+
+  // jika masih relative path, tambahkan domain backend
+  return `https://final-9pgj.onrender.com${url}`;
+}
+
 // ==============================
 // 🧭 NAVIGASI & TAMPILAN MATERI PADA HALAMAN INDEX
 // ==============================
@@ -1064,7 +1075,7 @@ document.addEventListener("DOMContentLoaded", () => {
         title.textContent = item.title;
 
         const img = document.createElement("img");
-        img.src = `https://final-9pgj.onrender.com${item.url}`;
+        img.src = getFullUrl(item.url);
         img.style.width = "100%";
         img.style.height = "200px";
         img.style.objectFit = "cover";
@@ -1076,10 +1087,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Tidak ada overlay untuk item ini");
             return;
           }
-          openOverlay(
-            item.overlayType,
-            `https://final-9pgj.onrender.com${item.overlayUrl}`,
-          );
+          openOverlay(item.overlayType, getFullUrl(item.overlayUrl));
         });
 
         card.appendChild(title);
@@ -1112,11 +1120,11 @@ document.addEventListener("DOMContentLoaded", () => {
         let mediaPreview = "";
 
         if (item.type === "video") {
-          mediaPreview = `<video width="100%" height="200" controls src="https://final-9pgj.onrender.com${item.url}"></video>`;
+          mediaPreview = `<video width="100%" height="200" controls src="${getFullUrl(item.url)}""></video>`;
         }
 
         if (item.type === "audio") {
-          mediaPreview = `<audio controls src="https://final-9pgj.onrender.com${item.url}"></audio>`;
+          mediaPreview = `<audio controls src="${getFullUrl(item.url)}""></audio>`;
         }
 
         const div = document.createElement("div");
