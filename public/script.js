@@ -376,9 +376,13 @@ function getFullUrl(url) {
 }
 
 function appendQuestionToForm(fd) {
+  const isQuestionEl = document.getElementById("isQuestion");
+  const questionTypeEl = document.getElementById("questionType");
+
   if (!isQuestionEl || !isQuestionEl.checked) return;
 
   const items = [];
+
   document.querySelectorAll(".question-item").forEach((el) => {
     const input = el.querySelector("input");
     const select = el.querySelector("select");
@@ -393,7 +397,6 @@ function appendQuestionToForm(fd) {
   fd.append("questionType", questionTypeEl.value);
   fd.append("questionItems", JSON.stringify(items));
 }
-
 // ==============================
 // 🧭 NAVIGASI & TAMPILAN MATERI PADA HALAMAN INDEX
 // ==============================
