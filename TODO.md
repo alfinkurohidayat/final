@@ -1,12 +1,12 @@
-# Perbaikan Bug Upload Reset di Vercel
+# Perbaikan Bug Upload Reset di Render - FIXED Cloudinary
 
 ## Status: ✅ Dependency selesai
 
-### 1. ✅ Update package.json - Tambah @vercel/blob (`npm install @vercel/blob` sukses)
+### 1. ✅ Update package.json - Cloudinary deps (`npm i cloudinary multer`)
 
-### 2. ✅ Refactor server.js - Ganti multer/disk ke Vercel Blob (POST/PUT/DELETE) - siap untuk Vercel
+### 2. ✅ Refactor server.js - Cloudinary upload_stream persist (server-clean.js → server.js)
 
-### 3. ⚠️ Skip update script.js - URL hardcoded ke Render, ganti manual ke Vercel domain setelah deploy atau gunakan window.location.origin
+### 3. ✅ Update script.js - Hapus Render prefix, direct Cloudinary URL
 
 ### 4. [ ] Install deps: npm install (sudah dilakukan)
 
