@@ -379,7 +379,6 @@ function appendQuestionToForm(fd) {
   const isQuestionEl = document.getElementById("isQuestion");
   const questionTypeEl = document.getElementById("questionType");
 
-  // ❌ kalau tidak dicentang → stop
   if (!isQuestionEl || !isQuestionEl.checked) return;
 
   const items = [];
@@ -388,28 +387,19 @@ function appendQuestionToForm(fd) {
     const input = el.querySelector("input");
     const select = el.querySelector("select");
 
-    const questionText = input?.value.trim();
-
-    // 🔥 skip kalau kosong
-    if (!questionText) return;
-
     items.push({
-      question: questionText,
-      answer: select ? select.value : "",
+      answer: select ? select.value : input?.value || "",
     });
   });
 
-  // ❌ kalau tidak ada soal → jangan kirim
   if (items.length === 0) {
-    alert("Soal belum diisi!");
+    alert("Jawaban belum diisi!");
     return;
   }
 
-  fd.append("isQuestion", "true"); // 🔥 pakai string biar aman
-  fd.append("questionType", questionTypeEl?.value || "essay");
+  fd.append("isQuestion", "true");
+  fd.append("questionType", questionTypeEl.value);
   fd.append("questionItems", JSON.stringify(items));
-
-  console.log("SOAL DIKIRIM:", items); // debug
 }
 // ==============================
 // 🧭 NAVIGASI & TAMPILAN MATERI PADA HALAMAN INDEX
@@ -552,35 +542,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderQuestionBuilder() {
       const type = questionTypeEl.value;
+      const count = parseInt(document.getElementById("questionCount").value);
 
-      questionBuilder.innerHTML = `
-      <button type="button" id="addQuestion">Tambah Soal</button>
-      <div id="questionList"></div>
-    `;
+      const questionList = document.createElement("div");
+      questionList.id = "questionList";
 
-      document.getElementById("addQuestion").addEventListener("click", () => {
-        const qList = document.getElementById("questionList");
+      if (!count) {
+        questionBuilder.innerHTML = "<p>Pilih jumlah jawaban dulu</p>";
+        return;
+      }
 
+      questionBuilder.innerHTML = "";
+      questionBuilder.appendChild(questionList);
+
+      for (let i = 0; i < count; i++) {
         const div = document.createElement("div");
         div.className = "question-item";
 
         if (type === "truefalse") {
           div.innerHTML = `
-          <input type="text" placeholder="Pertanyaan">
-          <select>
-            <option value="true">True</option>
-            <option value="false">False</option>
-          </select>
-        `;
+        <p>Jawaban ${i + 1}</p>
+        <select>
+          <option value="true">True</option>
+          <option value="false">False</option>
+        </select>
+      `;
         } else {
           div.innerHTML = `
-          <input type="text" placeholder="Pertanyaan Essay">
-        `;
+        <p>Jawaban ${i + 1}</p>
+        <input type="text" placeholder="Jawaban">
+      `;
         }
 
-        qList.appendChild(div);
-      });
+        questionList.appendChild(div);
+      }
     }
+
+    const questionCountEl = document.getElementById("questionCount");
+
+    questionCountEl.addEventListener("change", renderQuestionBuilder);
   }
 
   // ==============================
@@ -660,7 +660,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (item.questionType === "truefalse") {
         html += `
         <div>
-          <p>${q.question}</p>
+          <p>Jawaban ${i + 1}</p>
           <select class="answer">
             <option value="true">True</option>
             <option value="false">False</option>
