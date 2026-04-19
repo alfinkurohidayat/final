@@ -950,8 +950,9 @@ async function loadMediaList() {
 
     media.forEach((item) => {
       const tr = document.createElement("tr");
-      const urlDisplay = item.url || "-";
-
+      const urlDisplay = item.url
+        ? `https://final-9pgj.onrender.com${item.url}`
+        : "-";
       tr.innerHTML = `
         <td>${escapeHtml(item.title)}</td>
         <td>${escapeHtml(item.type)}</td>
