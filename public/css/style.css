@@ -155,6 +155,7 @@ main {
     border-radius: 12px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
+    /* scroll-behavior: smooth; */
 }
 
 .materi-card:hover {
@@ -162,7 +163,7 @@ main {
 }
 
 /*pop up*/
-.modal {
+/* .modal {
   display: none;
   position: fixed;
   inset: 0;
@@ -171,16 +172,78 @@ main {
   align-items: center;
 }
 
+#modalBody{
+    scroll-behavior: smooth;
+}
+
 .modal-content {
   background: white;
   padding: 20px;
   width: 80%;
   max-width: 600px;
   border-radius: 10px;
+  scroll-behavior: smooth;
 }
 
 #closeModal {
   float: right;
   cursor: pointer;
   font-size: 22px;
+} */
+
+/* ==============================
+   POPUP MODAL (FIX SCROLL)
+============================== */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  overflow-y: auto; /* 🔥 biar layar bisa scroll kalau konten tinggi */
+  padding: 20px;    /* 🔥 kasih jarak biar tidak mentok */
+}
+
+/* BOX MODAL */
+.modal-content {
+  background: white;
+  padding: 20px;
+  width: 80%;
+  max-width: 600px;
+  border-radius: 10px;
+
+  max-height: 80vh;   /* 🔥 BATAS TINGGI */
+  overflow-y: auto;   /* 🔥 SCROLL AKTIF DI DALAM BOX */
+
+  scroll-behavior: smooth;
+}
+
+/* OPTIONAL: SCROLLBAR BIAR BAGUS */
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* CLOSE BUTTON */
+#closeModal {
+  float: right;
+  cursor: pointer;
+  font-size: 22px;
+}
+
+/* BODY MODAL (TIDAK PERLU SCROLL DI SINI) */
+#modalBody {
+  margin-top: 10px;
 }
