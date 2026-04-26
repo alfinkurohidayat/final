@@ -494,7 +494,11 @@ document.addEventListener("DOMContentLoaded", () => {
         img.style.cursor = "pointer";
 
         img.addEventListener("click", () => {
-          showOptionModal(item); // ✅ langsung pakai item
+          if (!item.overlayType || !item.overlayUrl) {
+            console.log("Tidak ada overlay untuk item ini");
+            return;
+          }
+          openOverlay(item.overlayType, getFullUrl(item.overlayUrl));
         });
 
         card.appendChild(title);
@@ -643,18 +647,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==============================
 
   function showOptionModal(item) {
-    if (!item) {
-      console.error("Item kosong!");
-      return;
-    }
-
     const modal = document.getElementById("mediaModal");
     const body = document.getElementById("modalBody");
-
-    if (!modal || !body) {
-      console.error("Modal tidak ditemukan di DOM!");
-      return;
-    }
 
     body.innerHTML = `
     <button id="viewImage">Lihat Gambar</button>
@@ -759,24 +753,24 @@ document.addEventListener("DOMContentLoaded", () => {
   // 🔁 UPDATE klik gambar
   // ==============================
 
-  // const oldTampilkanMateri = tampilkanMateri;
+  const oldTampilkanMateri = tampilkanMateri;
 
-  // tampilkanMateri = async function (kelas, submateri) {
-  //   await oldTampilkanMateri(kelas, submateri);
+  tampilkanMateri = async function (kelas, submateri) {
+    await oldTampilkanMateri(kelas, submateri);
 
-  //   document.querySelectorAll(".materi-card img").forEach((img, index) => {
-  //     img.onclick = async () => {
-  //       const res = await fetch(
-  //         `https://final-9pgj.onrender.com/api/media/${kelas}/${submateri}`,
-  //         {
-  //           credentials: "include",
-  //         },
-  //       );
-  //       const data = await res.json();
-  //       showOptionModal(data[index]);
-  //     };
-  //   });
-  // };
+    document.querySelectorAll(".materi-card img").forEach((img, index) => {
+      img.onclick = async () => {
+        const res = await fetch(
+          `https://final-9pgj.onrender.com/api/media/${kelas}/${submateri}`,
+          {
+            credentials: "include",
+          },
+        );
+        const data = await res.json();
+        showOptionModal(data[index]);
+      };
+    });
+  };
 
   function showSubmateriList(kelas) {
     if (submenuTitle) submenuTitle.textContent = kelas;

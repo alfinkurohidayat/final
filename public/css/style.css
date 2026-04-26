@@ -172,9 +172,6 @@ main {
   align-items: center;
 }
 
-#modalBody{
-    scroll-behavior: smooth;
-}
 
 .modal-content {
   background: white;
@@ -189,9 +186,11 @@ main {
   float: right;
   cursor: pointer;
   font-size: 22px;
-} */
+}
+ */
 
-/* ==============================
+
+/*==============================
    POPUP MODAL (FIX SCROLL)
 ============================== */
 .modal {
@@ -200,7 +199,6 @@ main {
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
 
-  display: flex;
   justify-content: center;
   align-items: center;
 
