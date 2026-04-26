@@ -142,6 +142,16 @@ if (addBtnGlobal) {
     const classLevel = document.getElementById("classLevel").value;
     const category = document.getElementById("category").value;
     const fileInput = document.getElementById("mediaFile");
+    const overlayTypeEl = document.getElementById("overlayType");
+    const overlayFileEl = document.getElementById("overlayFile");
+
+    if (overlayTypeEl && overlayTypeEl.value) {
+      fd.append("overlayType", overlayTypeEl.value);
+    }
+
+    if (overlayFileEl && overlayFileEl.files.length > 0) {
+      fd.append("overlayFile", overlayFileEl.files[0]);
+    }
 
     if (!title || !type || !classLevel || !category) {
       alert("Lengkapi semua kolom (judul, tipe, kelas, kategori)!");
@@ -169,7 +179,8 @@ if (addBtnGlobal) {
       }
 
       // ✅ TAMBAHKAN INI
-      appendQuestionToForm(fd);
+      const valid = appendQuestionToForm(fd);
+      if (!valid) return;
 
       try {
         const res = await fetch("https://final-9pgj.onrender.com/api/media", {
@@ -674,7 +685,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         html += `
         <div>
-          <p>${q.question}</p>
+          <p>Jawaban ${i + 1}</p>
           <input class="answer" placeholder="Jawaban">
         </div>
       `;
