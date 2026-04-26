@@ -133,6 +133,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ==============================
 // 🎬 CRUD MEDIA ADMIN (Tambah / Update / Delete)
 // ==============================
+const overlayTypeEl = document.getElementById("overlayType");
+const overlayFileEl = document.getElementById("overlayFile");
 const addBtnGlobal = document.getElementById("addBtn");
 if (addBtnGlobal) {
   addBtnGlobal.addEventListener("click", async (e) => {
@@ -142,16 +144,6 @@ if (addBtnGlobal) {
     const classLevel = document.getElementById("classLevel").value;
     const category = document.getElementById("category").value;
     const fileInput = document.getElementById("mediaFile");
-    const overlayTypeEl = document.getElementById("overlayType");
-    const overlayFileEl = document.getElementById("overlayFile");
-
-    if (overlayTypeEl && overlayTypeEl.value) {
-      fd.append("overlayType", overlayTypeEl.value);
-    }
-
-    if (overlayFileEl && overlayFileEl.files.length > 0) {
-      fd.append("overlayFile", overlayFileEl.files[0]);
-    }
 
     if (!title || !type || !classLevel || !category) {
       alert("Lengkapi semua kolom (judul, tipe, kelas, kategori)!");
@@ -166,19 +158,27 @@ if (addBtnGlobal) {
       }
 
       const fd = new FormData();
+
       fd.append("title", title);
       fd.append("type", type);
       fd.append("kelas", classLevel);
       fd.append("submateri", category);
       fd.append("mediaFile", fileInput.files[0]);
 
-      fd.append("overlayType", overlayType.value);
+      // ✅ FIX: ambil element dulu
+      const overlayTypeEl = document.getElementById("overlayType");
+      const overlayFileEl = document.getElementById("overlayFile");
 
-      if (overlayFile.files.length > 0) {
-        fd.append("overlayFile", overlayFile.files[0]);
+      // pindahkan ke sini (sudah benar, tinggal diperbaiki scope-nya)
+      if (overlayTypeEl && overlayTypeEl.value) {
+        fd.append("overlayType", overlayTypeEl.value);
       }
 
-      // ✅ TAMBAHKAN INI
+      if (overlayFileEl && overlayFileEl.files.length > 0) {
+        fd.append("overlayFile", overlayFileEl.files[0]);
+      }
+
+      // ✅ TAMBAHKAN INI (sudah benar)
       const valid = appendQuestionToForm(fd);
       if (!valid) return;
 
@@ -188,7 +188,9 @@ if (addBtnGlobal) {
           body: fd,
           credentials: "include",
         });
+
         const data = await res.json();
+
         if (res.ok && data.success) {
           alert("Media berhasil ditambahkan!");
           resetAdminForm();
@@ -200,8 +202,6 @@ if (addBtnGlobal) {
         console.error("Gagal POST media:", err);
         alert("Terjadi kesalahan saat menambah media.");
       }
-
-      // === 🟢 UPDATE FILE DARI DEVICE (versi baru) ===
     } else {
       const fd =
         fileInput && fileInput.files.length > 0 ? new FormData() : null;
@@ -241,6 +241,30 @@ if (addBtnGlobal) {
             kelas: classLevel,
             submateri: category,
           };
+
+          // ✅ TAMBAHAN SOAL
+          const isQuestionEl = document.getElementById("isQuestion");
+          const questionTypeEl = document.getElementById("questionType");
+
+          if (isQuestionEl && isQuestionEl.checked) {
+            const items = [];
+
+            document.querySelectorAll(".question-item").forEach((el) => {
+              const input = el.querySelector("input");
+              const select = el.querySelector("select");
+
+              let value = "";
+
+              if (select) value = select.value;
+              else if (input) value = input.value.trim();
+
+              items.push({ answer: value });
+            });
+
+            payload.isQuestion = true;
+            payload.questionType = questionTypeEl?.value || "";
+            payload.questionItems = items;
+          }
           const res = await fetch(
             `https://final-9pgj.onrender.com/api/media/${editId}`,
             {
