@@ -394,24 +394,30 @@ function appendQuestionToForm(fd) {
 
   const items = [];
 
-  document.querySelectorAll(".question-item").forEach((el) => {
+  document.querySelectorAll(".question-item").forEach((el, index) => {
     const input = el.querySelector("input");
     const select = el.querySelector("select");
 
-    const value = select ? select.value : input?.value?.trim();
+    let value = "";
+
+    if (select) {
+      value = select.value;
+    } else if (input) {
+      value = input.value.trim();
+    }
 
     items.push({
-      answer: value || "",
+      answer: value,
     });
   });
 
-  if (items.length === 0 || items.some((i) => !i.answer)) {
+  if (items.length === 0 || items.some((i) => !i.answer || i.answer.trim() === "")) {
     alert("Jawaban belum diisi!");
     return false;
   }
 
   fd.append("isQuestion", "true");
-  fd.append("questionType", questionTypeEl.value);
+  fd.append("questionType", questionTypeEl?.value || "");
   fd.append("questionItems", JSON.stringify(items));
 
   return true;
@@ -921,3 +927,6 @@ function openOverlay(type, url) {
 }
 
 window.openOverlay = openOverlay;
+
+
+jawaban belum diisi
