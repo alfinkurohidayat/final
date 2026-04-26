@@ -411,7 +411,10 @@ function appendQuestionToForm(fd) {
     });
   });
 
-  if (items.length === 0 || items.some((i) => !i.answer || i.answer.trim() === "")) {
+  if (
+    items.length === 0 ||
+    items.some((i) => !i.answer || i.answer.trim() === "")
+  ) {
     alert("Jawaban belum diisi!");
     return false;
   }
@@ -927,6 +930,3 @@ function openOverlay(type, url) {
 }
 
 window.openOverlay = openOverlay;
-
-
-jawaban belum diisi
