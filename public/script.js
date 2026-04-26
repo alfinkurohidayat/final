@@ -413,33 +413,35 @@ function getFullUrl(url) {
 function appendQuestionToForm(fd) {
   const isQuestionEl = document.getElementById("isQuestion");
   const questionTypeEl = document.getElementById("questionType");
+  const questionCountEl = document.getElementById("questionCount");
 
   if (!isQuestionEl || !isQuestionEl.checked) return true;
 
+  // ❗ VALIDASI TAMBAHAN
+  if (!questionCountEl.value) {
+    alert("Pilih jumlah jawaban terlebih dahulu!");
+    return false;
+  }
+
   const items = [];
 
-  document.querySelectorAll(".question-item").forEach((el, index) => {
+  document.querySelectorAll(".question-item").forEach((el) => {
     const input = el.querySelector("input");
     const select = el.querySelector("select");
 
     let value = "";
 
-    if (select) {
-      value = select.value;
-    } else if (input) {
-      value = input.value.trim();
-    }
+    if (select) value = select.value;
+    else if (input) value = input.value.trim();
 
-    items.push({
-      answer: value,
-    });
+    items.push({ answer: value });
   });
 
   if (
     items.length === 0 ||
     items.some((i) => !i.answer || i.answer.trim() === "")
   ) {
-    alert("Jawaban belum diisi!");
+    alert("Semua jawaban harus diisi!");
     return false;
   }
 
@@ -954,3 +956,5 @@ function openOverlay(type, url) {
 }
 
 window.openOverlay = openOverlay;
+
+appendQuestionToForm;
