@@ -417,36 +417,26 @@ function appendQuestionToForm(fd) {
 
   if (!isQuestionEl || !isQuestionEl.checked) return true;
 
-  // ❗ VALIDASI TAMBAHAN
+  // ✅ WAJIB: type & jumlah
+  if (!questionTypeEl.value) {
+    alert("Pilih tipe soal!");
+    return false;
+  }
+
   if (!questionCountEl.value) {
-    alert("Pilih jumlah jawaban terlebih dahulu!");
+    alert("Pilih jumlah jawaban!");
     return false;
   }
 
-  const items = [];
+  const count = parseInt(questionCountEl.value);
 
-  document.querySelectorAll(".question-item").forEach((el) => {
-    const input = el.querySelector("input");
-    const select = el.querySelector("select");
-
-    let value = "";
-
-    if (select) value = select.value;
-    else if (input) value = input.value.trim();
-
-    items.push({ answer: value });
-  });
-
-  if (
-    items.length === 0 ||
-    items.some((i) => !i.answer || i.answer.trim() === "")
-  ) {
-    alert("Semua jawaban harus diisi!");
-    return false;
-  }
+  // ❗ kita tidak butuh jawaban, hanya jumlah
+  const items = Array.from({ length: count }, (_, i) => ({
+    answer: null,
+  }));
 
   fd.append("isQuestion", "true");
-  fd.append("questionType", questionTypeEl?.value || "");
+  fd.append("questionType", questionTypeEl.value);
   fd.append("questionItems", JSON.stringify(items));
 
   return true;
@@ -699,19 +689,20 @@ document.addEventListener("DOMContentLoaded", () => {
     <input id="studentClass" placeholder="Kelas">
   `;
 
-    const questions = item.questionItems || [];
+    const count = item.questionItems?.length || 0;
 
-    if (questions.length === 0) {
-      body.innerHTML += "<p>Tidak ada soal tersedia</p>";
+    if (count === 0) {
+      body.innerHTML = "<p>Tidak ada soal tersedia</p>";
       return;
     }
 
-    questions.forEach((q, i) => {
+    for (let i = 0; i < count; i++) {
       if (item.questionType === "truefalse") {
         html += `
         <div>
           <p>Jawaban ${i + 1}</p>
           <select class="answer">
+            <option value="">Pilih</option>
             <option value="true">True</option>
             <option value="false">False</option>
           </select>
@@ -725,7 +716,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
       }
-    });
+    }
 
     html += `<button id="submitAnswer">Kirim Jawaban</button>`;
 
@@ -956,5 +947,3 @@ function openOverlay(type, url) {
 }
 
 window.openOverlay = openOverlay;
-
-appendQuestionToForm;
