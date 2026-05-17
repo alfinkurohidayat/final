@@ -268,6 +268,25 @@ app.delete("/api/media/:id", checkAuth, async (req, res) => {
 });
 
 // ==============================
+// 🗑 RESET JAWABAN SISWA
+// ==============================
+app.delete("/api/answers/reset", checkAuth, async (req, res) => {
+  try {
+    await Answer.deleteMany({});
+
+    res.json({
+      success: true,
+      message: "Semua jawaban berhasil dihapus",
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+// ==============================
 // 📤 SUBMIT JAWABAN SISWA
 // ==============================
 app.post("/api/submit-answer", async (req, res) => {

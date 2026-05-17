@@ -139,7 +139,14 @@
             <!-- 🔥 DATA JAWABAN SISWA -->
             <div class="answer-table">
                 <h2>Data Jawaban Siswa</h2>
-                <button onclick="loadAnswers()">Refresh</button>
+
+                <button onclick="loadAnswers()">
+                    Refresh
+                </button>
+
+                <button onclick="resetAnswers()" style="background:red;color:white;">
+                    Reset Semua Data
+                </button>
 
                 <table border="1" width="100%">
                     <thead>
@@ -176,17 +183,52 @@
                     const tr = document.createElement("tr");
 
                     tr.innerHTML = `
-                        <td>${item.nama}</td>
-                        <td>${item.kelas}</td>
-                        <td>${item.answers.join(", ")}</td>
-                        <td>${new Date(item.createdAt).toLocaleString()}</td>
-                    `;
+                    <td>${item.nama}</td>
+                    <td>${item.kelas}</td>
+                    <td>${item.answers.join(", ")}</td>
+                    <td>${new Date(item.createdAt).toLocaleString()}</td>
+                `;
 
                     tbody.appendChild(tr);
                 });
 
             } catch (err) {
                 console.error("Gagal load jawaban:", err);
+            }
+        }
+
+        // =========================
+        // RESET DATA JAWABAN
+        // =========================
+        async function resetAnswers() {
+
+            const yakin = confirm(
+                "Yakin ingin menghapus semua jawaban siswa?"
+            );
+
+            if (!yakin) return;
+
+            try {
+
+                const res = await fetch(
+                    "https://final-9pgj.onrender.com/api/answers/reset",
+                    {
+                        method: "DELETE",
+                        credentials: "include"
+                    }
+                );
+
+                const data = await res.json();
+
+                alert(data.message || "Data berhasil direset");
+
+                loadAnswers();
+
+            } catch (err) {
+
+                console.error("Gagal reset:", err);
+                alert("Gagal reset data");
+
             }
         }
     </script>

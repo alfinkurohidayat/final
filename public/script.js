@@ -620,25 +620,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==============================
-  // 📤 TAMBAH DATA SOAL KE FORM
-  // ==============================
-
-  // 🔥 inject ke tombol add
-  // if (addBtnGlobal) {
-  //   const oldHandler = addBtnGlobal.onclick;
-
-  //   addBtnGlobal.onclick = async (e) => {
-  //     e.preventDefault();
-
-  //     const fd = new FormData();
-
-  //     appendQuestionToForm(fd);
-
-  //     if (oldHandler) oldHandler(e);
-  //   };
-  // }
-
-  // ==============================
   // 🎯 INTERAKSI GAMBAR (USER)
   // ==============================
 
@@ -691,8 +672,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let html = `
     <h3>${escapeHtml(item.title)}</h3>
     <img src="${getFullUrl(item.url)}" style="width:100%">
-    <input id="studentName" placeholder="Nama">
-    <input id="studentClass" placeholder="Kelas">
+    <input id="studentName" placeholder="Nama" required>
+    <input id="studentClass" placeholder="Kelas" required>
   `;
 
     const count = item.questionItems?.length || 0;
@@ -718,7 +699,7 @@ document.addEventListener("DOMContentLoaded", () => {
         html += `
         <div>
           <p>Jawaban ${i + 1}</p>
-          <input class="answer" placeholder="Jawaban">
+          <input class="answer" placeholder="Jawaban" required>
         </div>
       `;
       }
@@ -729,54 +710,58 @@ document.addEventListener("DOMContentLoaded", () => {
     body.innerHTML = html;
 
     document.getElementById("submitAnswer").onclick = async () => {
-      const nama = document.getElementById("studentName").value;
-      const kelas = document.getElementById("studentClass").value;
+      const nama = document.getElementById("studentName").value.trim();
+      const kelas = document.getElementById("studentClass").value.trim();
+
+      if (!nama || !kelas) {
+        alert("Nama dan kelas wajib diisi!");
+        return;
+      }
 
       const answers = [];
+      let hasEmpty = false;
+
       document.querySelectorAll(".answer").forEach((el) => {
-        answers.push(el.value);
+        const value = el.value.trim();
+
+        if (!value) {
+          hasEmpty = true;
+        }
+
+        answers.push(value);
       });
 
-      await fetch("https://final-9pgj.onrender.com/api/submit-answer", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mediaId: item._id,
-          nama,
-          kelas,
-          answers,
-        }),
-      });
+      if (hasEmpty) {
+        alert("Kamu wajib menjawab semua pertanyaan!");
+        return;
+      }
 
-      alert("Jawaban terkirim!");
+      try {
+        await fetch("https://final-9pgj.onrender.com/api/submit-answer", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mediaId: item._id,
+            nama,
+            kelas,
+            answers,
+          }),
+        });
+
+        alert("Jawaban terkirim!");
+      } catch (err) {
+        console.error(err);
+        alert("Gagal mengirim jawaban!");
+      }
     };
   }
 
   // ==============================
   // 🔁 UPDATE klik gambar
   // ==============================
-
-  // const oldTampilkanMateri = tampilkanMateri;
-
-  // tampilkanMateri = async function (kelas, submateri) {
-  //   await oldTampilkanMateri(kelas, submateri);
-
-  //   document.querySelectorAll(".materi-card img").forEach((img, index) => {
-  //     img.onclick = async () => {
-  //       const res = await fetch(
-  //         `https://final-9pgj.onrender.com/api/media/${kelas}/${submateri}`,
-  //         {
-  //           credentials: "include",
-  //         },
-  //       );
-  //       const data = await res.json();
-  //       showOptionModal(data[index]);
-  //     };
-  //   });
-  // };
 
   function showSubmateriList(kelas) {
     if (submenuTitle) submenuTitle.textContent = kelas;
