@@ -203,7 +203,7 @@
         async function resetAnswers() {
 
             const yakin = confirm(
-                "Yakin ingin menghapus semua jawaban siswa?"
+                "Yakin ingin menghapus semua jawaban?"
             );
 
             if (!yakin) return;
@@ -218,16 +218,26 @@
                     }
                 );
 
-                const data = await res.json();
+                const text = await res.text();
 
-                alert(data.message || "Data berhasil direset");
+                console.log(text);
 
-                loadAnswers();
+                try {
+
+                    const data = JSON.parse(text);
+
+                    alert(data.message);
+
+                    loadAnswers();
+
+                } catch {
+
+                    alert("Server tidak mengirim JSON");
+                }
 
             } catch (err) {
 
-                console.error("Gagal reset:", err);
-                alert("Gagal reset data");
+                console.error(err);
 
             }
         }
